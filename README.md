@@ -48,6 +48,7 @@ Pin an exact version. New versions are published as immutable GitHub releases wi
 | Name | Description |
 | ---- | ----------- |
 | api\_management\_project\_id | ID of the API Management Hub project. |
+| billing\_disabler\_email | Email of the billing disabler service account, running the billing disabler deployed by cf-observability. |
 | billing\_notification\_channel | ID of the notification channel of the billing administrators group (`projects/<project>/notificationChannels/<id>`). |
 | observability\_project\_id | ID of the Observability project. |
 <!-- markdownlint-restore -->

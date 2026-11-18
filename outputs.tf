@@ -12,3 +12,8 @@ output "billing_notification_channel" {
   description = "ID of the notification channel of the billing administrators group (`projects/<project>/notificationChannels/<id>`)."
   value       = google_monitoring_notification_channel.billing.id
 }
+
+output "billing_disabler_email" {
+  description = "Email of the billing disabler service account, running the billing disabler deployed by cf-observability."
+  value       = google_service_account.billing_disabler.email
+}

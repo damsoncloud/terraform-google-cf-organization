@@ -19,6 +19,7 @@ resource "google_project" "observability" {
 resource "google_project_service" "observability" {
   for_each = toset([
     # keep-sorted start
+    "iam.googleapis.com",
     "monitoring.googleapis.com",
     # keep-sorted end
   ])

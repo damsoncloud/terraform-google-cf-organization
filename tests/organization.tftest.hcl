@@ -1,4 +1,11 @@
 mock_provider "google" {
+  mock_resource "google_service_account" {
+    defaults = {
+      email  = "billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
+      member = "serviceAccount:billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
+    }
+  }
+
   mock_data "google_project" {
     defaults = {
       project_id = "cmn-cf-bootstrap-a1b2"
@@ -64,8 +71,8 @@ run "projects" {
   }
 
   assert {
-    condition     = keys(google_project_service.observability) == ["monitoring.googleapis.com"]
-    error_message = "The Observability project must have the Monitoring API enabled."
+    condition     = keys(google_project_service.observability) == ["iam.googleapis.com", "monitoring.googleapis.com"]
+    error_message = "The Observability project must have the IAM and Monitoring APIs enabled."
   }
 }
 
@@ -122,6 +129,30 @@ run "budgets" {
       budget.all_updates_rule[0].monitoring_notification_channels == tolist([google_monitoring_notification_channel.billing.id])
     ])
     error_message = "Each budget must alert only the billing notification channel, at 50%, 70% and 100%."
+  }
+}
+
+run "billing_disabler" {
+  assert {
+    condition = (
+      google_service_account.billing_disabler.project == "cmn-observability-c3d4" &&
+      google_service_account.billing_disabler.account_id == "billing-disabler"
+    )
+    error_message = "The billing disabler service account must be created in the Observability project."
+  }
+
+  assert {
+    condition = (
+      google_billing_account_iam_member.billing_disabler.billing_account_id == "012345-6789AB-CDEF01" &&
+      google_billing_account_iam_member.billing_disabler.role == "roles/billing.viewer" &&
+      google_billing_account_iam_member.billing_disabler.member == "serviceAccount:billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
+    )
+    error_message = "The billing disabler must be able to read the budgets of the billing account."
+  }
+
+  assert {
+    condition     = output.billing_disabler_email == "billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
+    error_message = "The billing disabler email must be returned as an output."
   }
 }
 
