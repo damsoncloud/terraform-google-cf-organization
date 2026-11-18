@@ -16,7 +16,7 @@ resource "google_monitoring_notification_channel" "billing" {
   type         = "email"
 
   labels = {
-    email_address = var.billing_admins_group
+    email_address = "${var.billing_admins_group_name}@${var.domain}"
   }
 
   depends_on = [google_project_service.observability]

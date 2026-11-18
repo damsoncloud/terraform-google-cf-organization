@@ -1,11 +1,13 @@
 locals {
-  # Granted by the authoritative organisation IAM policy: the disabler reads the projects in a budget's filter, detaches them from their billing account and replaces their
-  # project-level policy for the `gcp.restrictServiceUsage` constraint
-  billing_disabler_organization_roles = [
+  # Least privilege: only the organisation policies cannot be granted on the projects. Granted by the authoritative organisation IAM policy (iam.tf), it lets the
+  # disabler replace a project's policy for the `gcp.restrictServiceUsage` constraint
+  billing_disabler_organization_role = "roles/orgpolicy.policyAdmin"
+
+  # Granted by cf-gcp-project on each project with the billing disabler enabled, to read the project and detach it from its billing account
+  billing_disabler_project_roles = [
     # keep-sorted start
     "roles/billing.projectManager",
     "roles/browser",
-    "roles/orgpolicy.policyAdmin",
     # keep-sorted end
   ]
 }

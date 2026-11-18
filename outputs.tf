@@ -17,3 +17,8 @@ output "billing_disabler_email" {
   description = "Email of the billing disabler service account, running the billing disabler deployed by cf-observability."
   value       = google_service_account.billing_disabler.email
 }
+
+output "billing_disabler_project_roles" {
+  description = "Roles of the billing disabler service account on each project with the billing disabler enabled, granted by cf-gcp-project."
+  value       = local.billing_disabler_project_roles
+}
