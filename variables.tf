@@ -245,3 +245,35 @@ variable "audit_log_types" {
     error_message = "Each audit log type must be ADMIN_READ, DATA_READ or DATA_WRITE."
   }
 }
+
+variable "model_armor" {
+  description = <<-EOT
+    Organisation-level Model Armour floor setting, the minimum filters of every Model Armour template in the organisation:
+    `enforcement`, whether templates weaker than the floor setting are rejected;
+    `confidence_level`, the confidence level of the Responsible AI and the prompt injection and jailbreak filters: `LOW_AND_ABOVE`, `MEDIUM_AND_ABOVE` or `HIGH`;
+    `responsible_ai_filters`, the Responsible AI filters: `SEXUALLY_EXPLICIT`, `HATE_SPEECH`, `HARASSMENT` or `DANGEROUS`;
+    `prompt_injection_and_jailbreak`, `malicious_uri` and `sensitive_data_protection` (basic configuration), whether these filters are enabled;
+    `multi_language_detection`, whether prompts and responses are screened in all supported languages.
+  EOT
+  type = object({
+    enforcement                    = optional(bool, true)
+    confidence_level               = optional(string, "MEDIUM_AND_ABOVE")
+    responsible_ai_filters         = optional(list(string), ["DANGEROUS", "HARASSMENT", "HATE_SPEECH", "SEXUALLY_EXPLICIT"])
+    prompt_injection_and_jailbreak = optional(bool, true)
+    malicious_uri                  = optional(bool, true)
+    sensitive_data_protection      = optional(bool, true)
+    multi_language_detection       = optional(bool, true)
+  })
+  default  = {}
+  nullable = false
+
+  validation {
+    condition     = contains(["LOW_AND_ABOVE", "MEDIUM_AND_ABOVE", "HIGH"], var.model_armor.confidence_level)
+    error_message = "The model_armor confidence_level must be LOW_AND_ABOVE, MEDIUM_AND_ABOVE or HIGH."
+  }
+
+  validation {
+    condition     = alltrue([for filter in var.model_armor.responsible_ai_filters : contains(["SEXUALLY_EXPLICIT", "HATE_SPEECH", "HARASSMENT", "DANGEROUS"], filter)])
+    error_message = "Each model_armor Responsible AI filter must be SEXUALLY_EXPLICIT, HATE_SPEECH, HARASSMENT or DANGEROUS."
+  }
+}

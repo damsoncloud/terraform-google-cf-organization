@@ -567,3 +567,99 @@ run "invalid_budget_amount" {
 
   expect_failures = [var.budget_amounts]
 }
+
+run "model_armor" {
+  command = plan
+
+  assert {
+    condition = (
+      google_model_armor_floorsetting.organization.parent == "organizations/123456789012" &&
+      google_model_armor_floorsetting.organization.location == "global" &&
+      google_model_armor_floorsetting.organization.enable_floor_setting_enforcement
+    )
+    error_message = "The floor setting must be enforced on the organisation."
+  }
+
+  assert {
+    condition = (
+      { for filter in google_model_armor_floorsetting.organization.filter_config[0].rai_settings[0].rai_filters : filter.filter_type => filter.confidence_level } == {
+        DANGEROUS         = "MEDIUM_AND_ABOVE"
+        HARASSMENT        = "MEDIUM_AND_ABOVE"
+        HATE_SPEECH       = "MEDIUM_AND_ABOVE"
+        SEXUALLY_EXPLICIT = "MEDIUM_AND_ABOVE"
+      } &&
+      google_model_armor_floorsetting.organization.filter_config[0].pi_and_jailbreak_filter_settings[0].filter_enforcement == "ENABLED" &&
+      google_model_armor_floorsetting.organization.filter_config[0].pi_and_jailbreak_filter_settings[0].confidence_level == "MEDIUM_AND_ABOVE" &&
+      google_model_armor_floorsetting.organization.filter_config[0].malicious_uri_filter_settings[0].filter_enforcement == "ENABLED" &&
+      google_model_armor_floorsetting.organization.filter_config[0].sdp_settings[0].basic_config[0].filter_enforcement == "ENABLED" &&
+      google_model_armor_floorsetting.organization.floor_setting_metadata[0].multi_language_detection[0].enable_multi_language_detection
+    )
+    error_message = "All filters must be enabled at medium confidence by default."
+  }
+
+  assert {
+    condition = (
+      google_model_armor_floorsetting.organization.integrated_services == null &&
+      length(google_model_armor_floorsetting.organization.ai_platform_floor_setting) == 0 &&
+      length(google_model_armor_floorsetting.organization.google_mcp_server_floor_setting) == 0
+    )
+    error_message = "The integrated services must not be set on the organisation, as they are project-level only."
+  }
+
+  assert {
+    condition     = output.model_armor.confidence_level == "MEDIUM_AND_ABOVE" && length(output.model_armor.responsible_ai_filters) == 4
+    error_message = "The floor setting's filters must be returned with their defaults."
+  }
+
+  assert {
+    condition     = !contains(keys(output.model_armor), "enforcement")
+    error_message = "The organisation's enforcement must not be returned, as each project enables its own."
+  }
+}
+
+run "model_armor_reduced" {
+  command = plan
+
+  variables {
+    model_armor = {
+      confidence_level          = "HIGH"
+      responsible_ai_filters    = []
+      malicious_uri             = false
+      sensitive_data_protection = false
+    }
+  }
+
+  assert {
+    condition = (
+      length(google_model_armor_floorsetting.organization.filter_config[0].rai_settings) == 0 &&
+      google_model_armor_floorsetting.organization.filter_config[0].pi_and_jailbreak_filter_settings[0].confidence_level == "HIGH" &&
+      google_model_armor_floorsetting.organization.filter_config[0].malicious_uri_filter_settings[0].filter_enforcement == "DISABLED" &&
+      google_model_armor_floorsetting.organization.filter_config[0].sdp_settings[0].basic_config[0].filter_enforcement == "DISABLED"
+    )
+    error_message = "The filters must follow the model_armor input."
+  }
+}
+
+run "invalid_model_armor_confidence_level" {
+  command = plan
+
+  variables {
+    model_armor = {
+      confidence_level = "MEDIUM"
+    }
+  }
+
+  expect_failures = [var.model_armor]
+}
+
+run "invalid_model_armor_filter" {
+  command = plan
+
+  variables {
+    model_armor = {
+      responsible_ai_filters = ["VIOLENCE"]
+    }
+  }
+
+  expect_failures = [var.model_armor]
+}
