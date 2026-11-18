@@ -19,7 +19,10 @@ module "organization" {
   source  = "damsoncloud/cf-organization/google"
   version = "X.Y.Z"
 
-  # Inputs are documented once the module's first version is released.
+  folder_id            = module.hierarchy.folders["common"]
+  billing_account      = "012345-6789AB-CDEF01"
+  billing_admins_group = "gcp-billing-admins@example.com"
+  bootstrap_project_id = module.bootstrap.project_id
 }
 ```
 
@@ -30,11 +33,23 @@ Pin an exact version. New versions are published as immutable GitHub releases wi
 <!-- markdownlint-disable MD013 -->
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+| ---- | ----------- | ---- | ------- | :------: |
+| api\_management\_project\_id | ID of the API Management Hub project. Generated as `cmn-api-management-hub-<suffix>`, with the suffix of a generated Observability project ID, when null; set it to keep the ID of an existing project. | `string` | `null` | no |
+| billing\_account | ID of the billing account of the foundations' projects and their budgets, e.g. `012345-6789AB-CDEF01`. | `string` | n/a | yes |
+| billing\_admins\_group | Email of the group administering the billing account, e.g. `gcp-billing-admins@example.com`, notified of the budgets' alerts. | `string` | n/a | yes |
+| bootstrap\_project\_id | ID of the bootstrap project, e.g. the `project_id` output of cf-bootstrap, which gets a budget. | `string` | n/a | yes |
+| budget\_amounts | Budget amounts of the foundations' projects, in the billing account's currency, alerting at 50%, 70% and 100%. | ```object({ bootstrap = optional(number, 100) observability = optional(number, 100) api_management = optional(number, 100) })``` | `{}` | no |
+| folder\_id | The `common` folder holding the foundations' projects, as `folders/<id>`, e.g. the `folders["common"]` output of cf-hierarchy. | `string` | n/a | yes |
+| observability\_project\_id | ID of the Observability project. Generated as `cmn-observability-<suffix>`, with a random 4 hexadecimal characters suffix, when null; set it to keep the ID of an existing project. | `string` | `null` | no |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+| ---- | ----------- |
+| api\_management\_project\_id | ID of the API Management Hub project. |
+| billing\_notification\_channel | ID of the notification channel of the billing administrators group (`projects/<project>/notificationChannels/<id>`). |
+| observability\_project\_id | ID of the Observability project. |
 <!-- markdownlint-restore -->
 <!-- END_TF_DOCS -->
 
