@@ -3,11 +3,17 @@ data "google_project" "bootstrap" {
 }
 
 locals {
-  budget_projects = {
-    bootstrap      = data.google_project.bootstrap
-    observability  = google_project.observability
-    api_management = google_project.api_management
-  }
+  budget_projects = merge(
+    {
+      bootstrap      = { project_id = data.google_project.bootstrap.project_id, number = data.google_project.bootstrap.number, amount = var.budget_amounts.bootstrap }
+      observability  = { project_id = google_project.observability.project_id, number = google_project.observability.number, amount = var.budget_amounts.observability }
+      api_management = { project_id = google_project.api_management.project_id, number = google_project.api_management.number, amount = var.budget_amounts.api_management }
+    },
+    var.apps_script == null ? {} : {
+      apps_script = merge(module.apps_script[0].project, { amount = var.apps_script.budget_amount })
+    },
+    { for environment in keys(local.firebase_projects) : "firebase_${environment}" => merge(module.firebase[0].projects[environment], { amount = var.firebase.budget_amount }) },
+  )
 }
 
 resource "google_monitoring_notification_channel" "billing" {
@@ -35,7 +41,7 @@ resource "google_billing_budget" "projects" {
   # Without a currency code, the amount is in the billing account's currency
   amount {
     specified_amount {
-      units = tostring(var.budget_amounts[each.key])
+      units = tostring(each.value.amount)
     }
   }
 

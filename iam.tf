@@ -12,6 +12,9 @@ locals {
       for role in roles : { role = role, member = "group:gcp-${local.environments[folder]}-${suffix}@${var.domain}" }
     ] if contains(keys(local.environments), folder)]),
     flatten([for group, roles in lookup(var.folder_group_roles, folder, {}) : [for role in roles : { role = role, member = "group:${group}@${var.domain}" }]]),
+    [for role in local.firebase_developer_roles : {
+      role = role, member = "group:${var.firebase.developers[folder]}@${var.domain}"
+    } if var.firebase != null && contains(keys(try(var.firebase.developers, {})), folder)],
     [for role in var.environment_deployer_roles : {
       role = role, member = "serviceAccount:${var.tf_environment_emails[folder]}"
     } if contains(keys(var.tf_environment_emails), folder)],

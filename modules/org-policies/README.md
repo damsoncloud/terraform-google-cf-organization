@@ -5,7 +5,8 @@ customer repository:
 
 * the baseline on the organisation: resource locations, service usage, VPC peering, Shared VPC host projects, the members allowed in IAM allow policies, and the managed
   constraints for service account keys, Compute Engine, Dataflow and Spanner,
-* the exceptions of the `legacy` folder (service usage and service account key creation) and of the API Management Hub project (the API keys and Gemini APIs),
+* the exceptions of the `legacy` folder (service usage and service account key creation), of the API Management Hub project (the API keys and Gemini APIs) and of the
+  Firebase projects (the Firebase APIs),
 * further policies replacing or extending the baseline.
 
 The `mode` input supports a dry-run before the policies are enforced: `dry_run` sets only the policies whose constraints support dry-run, i.e. managed and custom constraints
@@ -43,6 +44,7 @@ module "org_policies" {
 | allowed\_vpc\_peering\_networks | Values of the `compute.restrictVpcPeering` constraint: the networks VPC networks may peer with, e.g. `under:organizations/<id>`; peering is denied when empty. | `list(string)` | `[]` | no |
 | api\_management | The API Management Hub project, e.g. the `api_management_project_id` output of cf-organization, and the services allowed there in addition to the organisation's, e.g. the Gemini API; no exception when null. | ```object({ project_id = string allowed_services = optional(list(string), ["apikeys.googleapis.com", "generativelanguage.googleapis.com"]) })``` | `null` | no |
 | disabled\_constraints | Constraints of the organisation-level baseline not to set, e.g. `compute.managed.vmExternalIpAccess`. | `list(string)` | `[]` | no |
+| firebase | The Firebase projects, e.g. the IDs of the `firebase_projects` output of cf-organization, and the Firebase APIs allowed there in addition to the organisation's, e.g. its `firebase_apis` output; no exception when null. | ```object({ project_ids = list(string) allowed_services = list(string) })``` | `null` | no |
 | legacy\_folder\_id | The `legacy` folder (`folders/<id>`), e.g. the `folders["legacy"].id` output of cf-hierarchy, where service usage and service account key creation are not restricted; no exceptions when null. | `string` | `null` | no |
 | mode | `dry_run` sets only the policies whose constraints support dry-run, as dry-run policies; `enforced` enforces all policies. | `string` | n/a | yes |
 | organization\_id | ID of the organisation, where the baseline policies are set. | `string` | n/a | yes |

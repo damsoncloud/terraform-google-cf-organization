@@ -37,3 +37,18 @@ output "api_management_project_number" {
   description = "Number of the API Management Hub project, e.g. for the membership of the vpc-service-controls submodule's perimeter."
   value       = google_project.api_management.number
 }
+
+output "apps_script_project" {
+  description = "ID and number of the Apps Script project, the Standard Cloud Project of every Apps Script; null when not created."
+  value       = var.apps_script == null ? null : module.apps_script[0].project
+}
+
+output "firebase_projects" {
+  description = "IDs and numbers of the Firebase projects, by environment folder name, e.g. for the org-policies submodule's `firebase` input and the perimeter's membership of the production one."
+  value       = var.firebase == null ? {} : module.firebase[0].projects
+}
+
+output "firebase_apis" {
+  description = "Firebase APIs enabled in the Firebase projects, for the org-policies submodule's `firebase` input; empty when Firebase is not set up."
+  value       = var.firebase == null ? [] : var.firebase.apis
+}

@@ -5,7 +5,9 @@ Terraform module of the Damson Cloud GCP Cloud Foundations configuring a Google 
 * the Observability and API Management Hub projects, the billing notification channel and the budgets of the foundations' projects,
 * the billing disabler service account,
 * authoritative organisation and folder IAM, including the organisation's Data Access audit log configuration,
-* the organisation-level Model Armour floor setting.
+* the organisation-level Model Armour floor setting,
+* the Apps Script project, the Standard Cloud Project of every Apps Script ([`modules/apps-script`](modules/apps-script)), created by default,
+* optionally, one Firebase project per environment folder ([`modules/firebase`](modules/firebase)), to which Firebase is added in the Firebase console.
 
 Submodules, applied in the same Terraform state:
 
@@ -50,6 +52,7 @@ Pin an exact version. New versions are published as immutable GitHub releases wi
 | additional\_folder\_bindings | Further folder members by folder name and role. | `map(map(list(string)))` | `{}` | no |
 | additional\_organization\_bindings | Further organisation members by role, e.g. `serviceAccount:` or `group:` members, and the Google-managed service agents granted at the organisation level, which the authoritative policy would remove otherwise. | `map(list(string))` | `{}` | no |
 | api\_management\_project\_id | ID of the API Management Hub project. Generated as `<common short name>-api-management-hub-<suffix>`, e.g. `cmn-api-management-hub-<suffix>`, with the suffix of a generated Observability project ID, when null; set it to keep the ID of an existing project. | `string` | `null` | no |
+| apps\_script | The Apps Script project in the common environment's folder, the Standard Cloud Project of every Apps Script; not created when null: `project_id`, generated as `<common short name>-apps-script-<suffix>` when null; `budget_amount`, in the billing account's currency; `apis`, the APIs used by the Apps Scripts. | ```object({ project_id = optional(string) budget_amount = optional(number, 10) apis = optional(list(string), [ "admin.googleapis.com", "docs.googleapis.com", "drive.googleapis.com", "gmail.googleapis.com", "telemetry.googleapis.com", ]) })``` | `{}` | no |
 | audit\_log\_types | Data Access audit log types enabled for all services in the organisation; none when empty. Admin Activity audit logs are always written. | `list(string)` | ```[ "ADMIN_READ", "DATA_READ", "DATA_WRITE" ]``` | no |
 | billing\_account | ID of the billing account of the foundations' projects and their budgets, e.g. `012345-6789AB-CDEF01`. | `string` | n/a | yes |
 | billing\_admins\_group\_name | Name of the group administering the billing account, without the domain, notified of the budgets' alerts. | `string` | `"gcp-billing-admins"` | no |
@@ -59,6 +62,7 @@ Pin an exact version. New versions are published as immutable GitHub releases wi
 | environment\_deployer\_roles | Roles of each environment deployer service account on its environment folder. | `list(string)` | ```[ "roles/resourcemanager.projectIamAdmin", "roles/writer" ]``` | no |
 | environment\_group\_roles | Roles of each environment folder's groups by group name suffix; e.g. `sres` grants the roles to `gcp-dev-sres` on the `development` folder. | `map(list(string))` | ```{ "sres": [ "roles/iam.siteReliabilityEngineer" ], "viewers": [ "roles/reader" ] }``` | no |
 | environment\_tag\_key | Namespaced name of the `environment` tag key (`<organization_id>/environment`), e.g. the `environment_tag_key_namespaced_name` output of cf-hierarchy. The groups granted roles on a folder see it through the Folder Viewer role on the organisation, limited to the folder's tag value. | `string` | n/a | yes |
+| firebase | The Firebase projects, one per environment folder, to which Firebase is added in the Firebase console; not created when null: `environments`, the environment folders with a Firebase project, all but the common one when null; `project_ids`, by environment folder name, generated as `<short name>-firebase-<suffix>` for the others; `budget_amount`, of each project, in the billing account's currency; `apis`, the Firebase APIs enabled in the projects, and allowed there by the org-policies submodule; `developers`, the group, by environment folder name, granted the Firebase Develop, Grow and Quality Admin roles on the folder. | ```object({ environments = optional(list(string)) project_ids = optional(map(string), {}) budget_amount = optional(number, 100) apis = optional(list(string), [ "firebaseappcheck.googleapis.com", "firebaseapphosting.googleapis.com", "firebasedataconnect.googleapis.com", "firebaserules.googleapis.com", "firebasestorage.googleapis.com", "firebasevertexai.googleapis.com", "firestore.googleapis.com", "firestorekeyvisualizer.googleapis.com", ]) developers = optional(map(string), { development = "gcp-dev-developers" }) })``` | `null` | no |
 | folder\_group\_roles | Further roles of groups on folders, by folder name and group name without the domain. | `map(map(list(string)))` | ```{ "development": { "gcp-dev-developers": [ "roles/iam.databasesAdmin", "roles/iam.devOps", "roles/iam.infrastructureAdmin" ] } }``` | no |
 | folders | The folders by folder name, e.g. the `folders` output of cf-hierarchy, each tagged with its name as the `environment` tag value: `id`, the resource name (`folders/<id>`); `short_name`, the environment's short name, null for folders other than environments; `common`, whether it is the common environment. Each folder's IAM policy is set authoritatively, and each environment folder gets the `gcp-<short name>-<suffix>` groups of `environment_group_roles`. The foundations' projects are created in the common environment's folder and their generated IDs start with its short name. | ```map(object({ id = string short_name = optional(string) common = optional(bool, false) }))``` | n/a | yes |
 | legacy\_admins\_group\_name | Name of the group administering the `legacy` folder, without the domain. | `string` | `"gcp-legacy-admins"` | no |
@@ -79,9 +83,12 @@ Pin an exact version. New versions are published as immutable GitHub releases wi
 | ---- | ----------- |
 | api\_management\_project\_id | ID of the API Management Hub project. |
 | api\_management\_project\_number | Number of the API Management Hub project, e.g. for the membership of the vpc-service-controls submodule's perimeter. |
+| apps\_script\_project | ID and number of the Apps Script project, the Standard Cloud Project of every Apps Script; null when not created. |
 | billing\_disabler\_email | Email of the billing disabler service account, running the billing disabler deployed by cf-observability. |
 | billing\_disabler\_project\_roles | Roles of the billing disabler service account on each project with the billing disabler enabled, granted by cf-gcp-project. |
 | billing\_notification\_channel | ID of the notification channel of the billing administrators group (`projects/<project>/notificationChannels/<id>`). |
+| firebase\_apis | Firebase APIs enabled in the Firebase projects, for the org-policies submodule's `firebase` input; empty when Firebase is not set up. |
+| firebase\_projects | IDs and numbers of the Firebase projects, by environment folder name, e.g. for the org-policies submodule's `firebase` input and the perimeter's membership of the production one. |
 | model\_armor | Filters of the organisation's Model Armour floor setting, the `model_armor` input with its defaults except `enforcement`, for the project-level Agent Platform and Google MCP server floor settings of cf-gcp-project, which replace the organisation's filters and screen only with their own enforcement enabled. |
 | observability\_project\_id | ID of the Observability project. |
 | observability\_project\_number | Number of the Observability project, e.g. for the membership of the vpc-service-controls submodule's perimeter. |

@@ -174,6 +174,15 @@ variable "api_management" {
   default = null
 }
 
+variable "firebase" {
+  description = "The Firebase projects, e.g. the IDs of the `firebase_projects` output of cf-organization, and the Firebase APIs allowed there in addition to the organisation's, e.g. its `firebase_apis` output; no exception when null."
+  type = object({
+    project_ids      = list(string)
+    allowed_services = list(string)
+  })
+  default = null
+}
+
 variable "shared_vpc_host_folder_id" {
   description = "The folder (`folders/<id>`) where Shared VPC host projects can be, e.g. the common environment's folder, enforced with `compute.restrictSharedVpcHostProjects`; not restricted when null."
   type        = string

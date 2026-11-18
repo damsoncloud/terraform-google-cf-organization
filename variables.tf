@@ -277,3 +277,74 @@ variable "model_armor" {
     error_message = "Each model_armor Responsible AI filter must be SEXUALLY_EXPLICIT, HATE_SPEECH, HARASSMENT or DANGEROUS."
   }
 }
+
+variable "apps_script" {
+  description = <<-EOT
+    The Apps Script project in the common environment's folder, the Standard Cloud Project of every Apps Script; not created when null:
+    `project_id`, generated as `<common short name>-apps-script-<suffix>` when null;
+    `budget_amount`, in the billing account's currency;
+    `apis`, the APIs used by the Apps Scripts.
+  EOT
+  type = object({
+    project_id    = optional(string)
+    budget_amount = optional(number, 10)
+    apis = optional(list(string), [
+      "admin.googleapis.com",
+      "docs.googleapis.com",
+      "drive.googleapis.com",
+      "gmail.googleapis.com",
+      "telemetry.googleapis.com",
+    ])
+  })
+  default = {}
+
+  validation {
+    condition     = var.apps_script == null || try(var.apps_script.budget_amount > 0 && floor(var.apps_script.budget_amount) == var.apps_script.budget_amount, false)
+    error_message = "The apps_script budget_amount must be a positive whole number."
+  }
+}
+
+variable "firebase" {
+  description = <<-EOT
+    The Firebase projects, one per environment folder, to which Firebase is added in the Firebase console; not created when null:
+    `environments`, the environment folders with a Firebase project, all but the common one when null;
+    `project_ids`, by environment folder name, generated as `<short name>-firebase-<suffix>` for the others;
+    `budget_amount`, of each project, in the billing account's currency;
+    `apis`, the Firebase APIs enabled in the projects, and allowed there by the org-policies submodule;
+    `developers`, the group, by environment folder name, granted the Firebase Develop, Grow and Quality Admin roles on the folder.
+  EOT
+  type = object({
+    environments  = optional(list(string))
+    project_ids   = optional(map(string), {})
+    budget_amount = optional(number, 100)
+    apis = optional(list(string), [
+      "firebaseappcheck.googleapis.com",
+      "firebaseapphosting.googleapis.com",
+      "firebasedataconnect.googleapis.com",
+      "firebaserules.googleapis.com",
+      "firebasestorage.googleapis.com",
+      "firebasevertexai.googleapis.com",
+      "firestore.googleapis.com",
+      "firestorekeyvisualizer.googleapis.com",
+    ])
+    developers = optional(map(string), { development = "gcp-dev-developers" })
+  })
+  default = null
+
+  validation {
+    condition = var.firebase == null || alltrue([for environment in concat(coalesce(var.firebase.environments, []), keys(var.firebase.project_ids)) :
+      try(var.folders[environment].short_name != null && !var.folders[environment].common, false)
+    ])
+    error_message = "The firebase environments and project_ids must be environment folders other than the common one."
+  }
+
+  validation {
+    condition     = var.firebase == null || alltrue([for folder in keys(try(var.firebase.developers, {})) : contains(keys(var.folders), folder)])
+    error_message = "The folders of the firebase developers must be one of the folders."
+  }
+
+  validation {
+    condition     = var.firebase == null || try(var.firebase.budget_amount > 0 && floor(var.firebase.budget_amount) == var.firebase.budget_amount, false)
+    error_message = "The firebase budget_amount must be a positive whole number."
+  }
+}

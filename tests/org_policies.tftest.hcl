@@ -115,6 +115,18 @@ run "exceptions" {
       project_id = "cmn-api-management-hub-c3d4"
     }
     shared_vpc_host_folder_id = "folders/111111111111"
+    firebase = {
+      project_ids      = ["dev-firebase-c3d4"]
+      allowed_services = ["firestore.googleapis.com"]
+    }
+  }
+
+  assert {
+    condition = (
+      google_org_policy_policy.this["projects/dev-firebase-c3d4/gcp.restrictServiceUsage"].spec[0].inherit_from_parent &&
+      google_org_policy_policy.this["projects/dev-firebase-c3d4/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values == tolist(["firestore.googleapis.com"])
+    )
+    error_message = "The Firebase projects must also allow the Firebase APIs."
   }
 
   assert {

@@ -78,6 +78,11 @@ locals {
         inherit_from_parent = true
       })
     },
+    var.firebase == null ? {} : { for project_id in var.firebase.project_ids : "projects/${project_id}/gcp.restrictServiceUsage" => merge(local.policy, {
+      parent              = "projects/${project_id}"
+      allow               = var.firebase.allowed_services
+      inherit_from_parent = true
+    }) },
   )
 
   additional = { for policy in var.additional_policies : "${coalesce(policy.parent, local.organization)}/${policy.constraint}" => merge(local.policy, {

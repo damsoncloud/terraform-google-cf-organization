@@ -138,7 +138,7 @@ run "budgets" {
   }
 
   assert {
-    condition     = toset(keys(google_billing_budget.projects)) == toset(["bootstrap", "observability", "api_management"])
+    condition     = toset(keys(google_billing_budget.projects)) == toset(["bootstrap", "observability", "api_management", "apps_script"])
     error_message = "Each foundations' project must have a budget."
   }
 
@@ -662,4 +662,123 @@ run "invalid_model_armor_filter" {
   }
 
   expect_failures = [var.model_armor]
+}
+
+run "apps_script_by_default" {
+  assert {
+    condition = (
+      output.apps_script_project.project_id == "cmn-apps-script-c3d4" &&
+      module.apps_script[0].project.project_id == "cmn-apps-script-c3d4"
+    )
+    error_message = "The Apps Script project must be created by default, with a generated ID."
+  }
+
+  assert {
+    condition = (
+      google_billing_budget.projects["apps_script"].amount[0].specified_amount[0].units == "10" &&
+      google_billing_budget.projects["apps_script"].budget_filter[0].projects == toset(["projects/${output.apps_script_project.number}"])
+    )
+    error_message = "The Apps Script project must have a budget of 10 by default."
+  }
+
+  assert {
+    condition     = length(module.firebase) == 0 && output.firebase_projects == {} && output.firebase_apis == []
+    error_message = "No Firebase project must be created by default."
+  }
+}
+
+run "without_apps_script" {
+  command = plan
+
+  variables {
+    apps_script = null
+  }
+
+  assert {
+    condition     = length(module.apps_script) == 0 && output.apps_script_project == null && !contains(keys(google_billing_budget.projects), "apps_script")
+    error_message = "No Apps Script project or budget must be created when apps_script is null."
+  }
+}
+
+run "firebase" {
+  variables {
+    firebase = {
+      project_ids   = { production = "prod-firebase-6703" }
+      budget_amount = 200
+    }
+  }
+
+  assert {
+    condition = { for environment, project in output.firebase_projects : environment => project.project_id } == {
+      development   = "dev-firebase-c3d4"
+      certification = "cert-firebase-c3d4"
+      production    = "prod-firebase-6703"
+    }
+    error_message = "Each environment but the common one must get a Firebase project, with a generated or given ID."
+  }
+
+  assert {
+    condition = alltrue([for environment in ["development", "certification", "production"] :
+      google_billing_budget.projects["firebase_${environment}"].amount[0].specified_amount[0].units == "200"
+    ])
+    error_message = "Each Firebase project must have a budget."
+  }
+
+  assert {
+    condition = { for binding in data.google_iam_policy.folders["development"].binding : binding.role => binding.members if startswith(binding.role, "roles/firebase.") } == {
+      "roles/firebase.developAdmin" = toset(["group:gcp-dev-developers@example.com"])
+      "roles/firebase.growthAdmin"  = toset(["group:gcp-dev-developers@example.com"])
+      "roles/firebase.qualityAdmin" = toset(["group:gcp-dev-developers@example.com"])
+    }
+    error_message = "The developers must be granted the Firebase roles on the development folder only."
+  }
+
+  assert {
+    condition     = length([for binding in data.google_iam_policy.folders["production"].binding : binding if startswith(binding.role, "roles/firebase.")]) == 0
+    error_message = "No Firebase role must be granted on the other folders."
+  }
+
+  assert {
+    condition     = contains(output.firebase_apis, "firestore.googleapis.com")
+    error_message = "The Firebase APIs must be returned for the org-policies submodule."
+  }
+}
+
+run "firebase_development_only" {
+  command = plan
+
+  variables {
+    firebase = {
+      environments = ["development"]
+    }
+  }
+
+  assert {
+    condition     = keys(local.firebase_projects) == ["development"]
+    error_message = "Only the listed environments must get a Firebase project."
+  }
+}
+
+run "firebase_in_common_environment" {
+  command = plan
+
+  variables {
+    firebase = {
+      environments = ["common"]
+    }
+  }
+
+  expect_failures = [var.firebase]
+}
+
+run "invalid_apps_script_budget" {
+  command = plan
+
+  variables {
+    apps_script = {
+      budget_amount = 0
+    }
+  }
+
+  expect_failures = [var.apps_script]
 }
