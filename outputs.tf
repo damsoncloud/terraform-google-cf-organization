@@ -27,3 +27,13 @@ output "model_armor" {
   description = "Filters of the organisation's Model Armour floor setting, the `model_armor` input with its defaults except `enforcement`, for the project-level Agent Platform and Google MCP server floor settings of cf-gcp-project, which replace the organisation's filters and screen only with their own enforcement enabled."
   value       = { for setting, value in var.model_armor : setting => value if setting != "enforcement" }
 }
+
+output "observability_project_number" {
+  description = "Number of the Observability project, e.g. for the membership of the vpc-service-controls submodule's perimeter."
+  value       = google_project.observability.number
+}
+
+output "api_management_project_number" {
+  description = "Number of the API Management Hub project, e.g. for the membership of the vpc-service-controls submodule's perimeter."
+  value       = google_project.api_management.number
+}

@@ -78,11 +78,13 @@ Pin an exact version. New versions are published as immutable GitHub releases wi
 | Name | Description |
 | ---- | ----------- |
 | api\_management\_project\_id | ID of the API Management Hub project. |
+| api\_management\_project\_number | Number of the API Management Hub project, e.g. for the membership of the vpc-service-controls submodule's perimeter. |
 | billing\_disabler\_email | Email of the billing disabler service account, running the billing disabler deployed by cf-observability. |
 | billing\_disabler\_project\_roles | Roles of the billing disabler service account on each project with the billing disabler enabled, granted by cf-gcp-project. |
 | billing\_notification\_channel | ID of the notification channel of the billing administrators group (`projects/<project>/notificationChannels/<id>`). |
 | model\_armor | Filters of the organisation's Model Armour floor setting, the `model_armor` input with its defaults except `enforcement`, for the project-level Agent Platform and Google MCP server floor settings of cf-gcp-project, which replace the organisation's filters and screen only with their own enforcement enabled. |
 | observability\_project\_id | ID of the Observability project. |
+| observability\_project\_number | Number of the Observability project, e.g. for the membership of the vpc-service-controls submodule's perimeter. |
 <!-- markdownlint-restore -->
 <!-- END_TF_DOCS -->
 
