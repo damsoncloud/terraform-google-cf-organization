@@ -42,6 +42,9 @@ module "organization" {
 
 Pin an exact version. New versions are published as immutable GitHub releases with `vX.Y.Z` tags, following [semantic versioning](https://semver.org/).
 
+See [`examples/basic`](examples/basic) for the module applied with cf-hierarchy and cf-bootstrap, and [`examples/complete`](examples/complete) for the organisation policies,
+the perimeter and Firebase.
+
 <!-- BEGIN_TF_DOCS -->
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable MD013 -->
