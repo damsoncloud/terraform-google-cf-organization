@@ -14,7 +14,7 @@ run "enforced_baseline" {
   }
 
   assert {
-    condition = keys(google_org_policy_policy.this) == [for constraint in [
+    condition = keys(google_org_policy_policy.policies) == [for constraint in [
       "compute.managed.blockPreviewFeatures",
       "compute.managed.blockProjectSshKeys",
       "compute.managed.disableSerialPortAccess",
@@ -36,7 +36,7 @@ run "enforced_baseline" {
   }
 
   assert {
-    condition = alltrue([for key, policy in google_org_policy_policy.this :
+    condition = alltrue([for key, policy in google_org_policy_policy.policies :
       policy.name == "organizations/123456789012/policies/${element(split("/", key), 2)}" && length(policy.spec) == 1 && length(policy.dry_run_spec) == 0
     ])
     error_message = "Each policy must be enforced, without a dry-run policy."
@@ -44,30 +44,30 @@ run "enforced_baseline" {
 
   assert {
     condition = alltrue([for constraint in ["compute.managed.vmExternalIpAccess", "compute.skipDefaultNetworkCreation", "storage.uniformBucketLevelAccess"] :
-      google_org_policy_policy.this["organizations/123456789012/${constraint}"].spec[0].rules[0].enforce == "TRUE"
+      google_org_policy_policy.policies["organizations/123456789012/${constraint}"].spec[0].rules[0].enforce == "TRUE"
     ])
     error_message = "The boolean constraints must be enforced."
   }
 
   assert {
     condition = (
-      google_org_policy_policy.this["organizations/123456789012/gcp.resourceLocations"].spec[0].rules[0].values[0].allowed_values == tolist(["in:europe-west4-locations"]) &&
-      google_org_policy_policy.this["organizations/123456789012/compute.restrictVpcPeering"].spec[0].rules[0].deny_all == "TRUE" &&
-      contains(google_org_policy_policy.this["organizations/123456789012/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values, "run.googleapis.com") &&
-      !contains(google_org_policy_policy.this["organizations/123456789012/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values, "generativelanguage.googleapis.com")
+      google_org_policy_policy.policies["organizations/123456789012/gcp.resourceLocations"].spec[0].rules[0].values[0].allowed_values == tolist(["in:europe-west4-locations"]) &&
+      google_org_policy_policy.policies["organizations/123456789012/compute.restrictVpcPeering"].spec[0].rules[0].deny_all == "TRUE" &&
+      contains(google_org_policy_policy.policies["organizations/123456789012/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values, "run.googleapis.com") &&
+      !contains(google_org_policy_policy.policies["organizations/123456789012/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values, "generativelanguage.googleapis.com")
     )
     error_message = "The list constraints must allow the default locations and services, without the Gemini API, and deny VPC peering."
   }
 
   assert {
-    condition = jsondecode(google_org_policy_policy.this["organizations/123456789012/spanner.managed.restrictCloudSpannerEditions"].spec[0].rules[0].parameters) == {
+    condition = jsondecode(google_org_policy_policy.policies["organizations/123456789012/spanner.managed.restrictCloudSpannerEditions"].spec[0].rules[0].parameters) == {
       deniedEditions = ["ENTERPRISE", "ENTERPRISE_PLUS"]
     }
     error_message = "The Enterprise editions of Spanner must be denied."
   }
 
   assert {
-    condition = jsondecode(google_org_policy_policy.this["organizations/123456789012/iam.managed.allowedPolicyMembers"].spec[0].rules[0].parameters) == {
+    condition = jsondecode(google_org_policy_policy.policies["organizations/123456789012/iam.managed.allowedPolicyMembers"].spec[0].rules[0].parameters) == {
       allowedMemberSubjects = ["serviceAccount:billing-budget-alert@system.gserviceaccount.com"]
       allowedPrincipalSets  = ["//cloudresourcemanager.googleapis.com/organizations/123456789012"]
     }
@@ -89,13 +89,13 @@ run "dry_run" {
 
   assert {
     condition = alltrue([for constraint in ["gcp.resourceLocations", "compute.restrictVpcPeering", "compute.skipDefaultNetworkCreation", "storage.uniformBucketLevelAccess"] :
-      !contains(keys(google_org_policy_policy.this), "organizations/123456789012/${constraint}")
+      !contains(keys(google_org_policy_policy.policies), "organizations/123456789012/${constraint}")
     ])
     error_message = "The policies whose constraints do not support dry-run must not be set in dry-run mode."
   }
 
   assert {
-    condition = length(google_org_policy_policy.this) == 14 && alltrue([for policy in google_org_policy_policy.this :
+    condition = length(google_org_policy_policy.policies) == 14 && alltrue([for policy in google_org_policy_policy.policies :
       length(policy.spec) == 0 && length(policy.dry_run_spec) == 1
     ])
     error_message = "The managed constraints, gcp.restrictServiceUsage and the legacy folder's exceptions must be set as dry-run policies only."
@@ -123,30 +123,30 @@ run "exceptions" {
 
   assert {
     condition = (
-      google_org_policy_policy.this["projects/dev-firebase-c3d4/gcp.restrictServiceUsage"].spec[0].inherit_from_parent &&
-      google_org_policy_policy.this["projects/dev-firebase-c3d4/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values == tolist(["firestore.googleapis.com"])
+      google_org_policy_policy.policies["projects/dev-firebase-c3d4/gcp.restrictServiceUsage"].spec[0].inherit_from_parent &&
+      google_org_policy_policy.policies["projects/dev-firebase-c3d4/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values == tolist(["firestore.googleapis.com"])
     )
     error_message = "The Firebase projects must also allow the Firebase APIs."
   }
 
   assert {
     condition = (
-      google_org_policy_policy.this["folders/100000000004/gcp.restrictServiceUsage"].spec[0].rules[0].allow_all == "TRUE" &&
-      google_org_policy_policy.this["folders/100000000004/iam.managed.disableServiceAccountKeyCreation"].spec[0].rules[0].enforce == "FALSE"
+      google_org_policy_policy.policies["folders/100000000004/gcp.restrictServiceUsage"].spec[0].rules[0].allow_all == "TRUE" &&
+      google_org_policy_policy.policies["folders/100000000004/iam.managed.disableServiceAccountKeyCreation"].spec[0].rules[0].enforce == "FALSE"
     )
     error_message = "The legacy folder must not restrict service usage and service account key creation."
   }
 
   assert {
     condition = (
-      google_org_policy_policy.this["projects/cmn-api-management-hub-c3d4/gcp.restrictServiceUsage"].spec[0].inherit_from_parent &&
-      google_org_policy_policy.this["projects/cmn-api-management-hub-c3d4/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values == tolist(["apikeys.googleapis.com", "generativelanguage.googleapis.com"])
+      google_org_policy_policy.policies["projects/cmn-api-management-hub-c3d4/gcp.restrictServiceUsage"].spec[0].inherit_from_parent &&
+      google_org_policy_policy.policies["projects/cmn-api-management-hub-c3d4/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values == tolist(["apikeys.googleapis.com", "generativelanguage.googleapis.com"])
     )
     error_message = "The API Management Hub project must also allow the API keys and Gemini APIs."
   }
 
   assert {
-    condition     = google_org_policy_policy.this["organizations/123456789012/compute.restrictSharedVpcHostProjects"].spec[0].rules[0].values[0].allowed_values == tolist(["under:folders/111111111111"])
+    condition     = google_org_policy_policy.policies["organizations/123456789012/compute.restrictSharedVpcHostProjects"].spec[0].rules[0].values[0].allowed_values == tolist(["under:folders/111111111111"])
     error_message = "Shared VPC host projects must be restricted to the given folder."
   }
 }
@@ -181,25 +181,25 @@ run "customisations" {
 
   assert {
     condition = (
-      !contains(keys(google_org_policy_policy.this), "organizations/123456789012/compute.managed.vmExternalIpAccess") &&
-      jsondecode(google_org_policy_policy.this["organizations/123456789012/compute.managed.blockPreviewFeatures"].spec[0].rules[0].parameters) == { allowedPreviewFeatures = ["someFeature"] } &&
-      google_org_policy_policy.this["projects/dc-dev-example-1234/storage.uniformBucketLevelAccess"].spec[0].rules[0].enforce == "FALSE"
+      !contains(keys(google_org_policy_policy.policies), "organizations/123456789012/compute.managed.vmExternalIpAccess") &&
+      jsondecode(google_org_policy_policy.policies["organizations/123456789012/compute.managed.blockPreviewFeatures"].spec[0].rules[0].parameters) == { allowedPreviewFeatures = ["someFeature"] } &&
+      google_org_policy_policy.policies["projects/dc-dev-example-1234/storage.uniformBucketLevelAccess"].spec[0].rules[0].enforce == "FALSE"
     )
     error_message = "Disabled constraints must not be set, and additional policies must replace the baseline's or be added."
   }
 
   assert {
     condition = (
-      length(google_org_policy_policy.this["organizations/123456789012/gcp.resourceLocations"].spec[0].rules[0].values[0].allowed_values) == 2 &&
-      contains(google_org_policy_policy.this["organizations/123456789012/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values, "dns.googleapis.com") &&
-      google_org_policy_policy.this["organizations/123456789012/compute.restrictVpcPeering"].spec[0].rules[0].values[0].allowed_values == tolist(["under:organizations/123456789012"]) &&
-      google_org_policy_policy.this["organizations/123456789012/compute.restrictVpcPeering"].spec[0].rules[0].deny_all == null
+      length(google_org_policy_policy.policies["organizations/123456789012/gcp.resourceLocations"].spec[0].rules[0].values[0].allowed_values) == 2 &&
+      contains(google_org_policy_policy.policies["organizations/123456789012/gcp.restrictServiceUsage"].spec[0].rules[0].values[0].allowed_values, "dns.googleapis.com") &&
+      google_org_policy_policy.policies["organizations/123456789012/compute.restrictVpcPeering"].spec[0].rules[0].values[0].allowed_values == tolist(["under:organizations/123456789012"]) &&
+      google_org_policy_policy.policies["organizations/123456789012/compute.restrictVpcPeering"].spec[0].rules[0].deny_all == null
     )
     error_message = "The locations, services and VPC peering networks must follow the inputs."
   }
 
   assert {
-    condition = jsondecode(google_org_policy_policy.this["organizations/123456789012/iam.managed.allowedPolicyMembers"].spec[0].rules[0].parameters) == {
+    condition = jsondecode(google_org_policy_policy.policies["organizations/123456789012/iam.managed.allowedPolicyMembers"].spec[0].rules[0].parameters) == {
       allowedMemberSubjects = ["serviceAccount:billing-budget-alert@system.gserviceaccount.com", "user:someone@partner.example"]
       allowedPrincipalSets  = ["//cloudresourcemanager.googleapis.com/organizations/123456789012", "//cloudresourcemanager.googleapis.com/organizations/999999999999"]
     }

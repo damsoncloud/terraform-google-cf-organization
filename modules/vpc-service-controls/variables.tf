@@ -167,14 +167,14 @@ variable "access_levels" {
 
 variable "ingress_policies" {
   description = <<-EOT
-    Ingress rules in addition to the deployers' and Cloud Billing's:
+    Ingress rules in addition to the deployers' and Cloud Billing's, by their unique `title`:
     `identities` or `identity_type` (`ANY_IDENTITY`, `ANY_USER_ACCOUNT` or `ANY_SERVICE_ACCOUNT`), the principals allowed;
     `source_access_levels`, the names of `access_levels` or `*` for any source, and `source_resources`, e.g. `projects/<number>`;
     `resources`, the projects in the perimeter, `*` for all;
     `operations`, the methods by service, `*` for all services, and all methods of a service when its list is empty.
   EOT
   type = list(object({
-    title                = optional(string)
+    title                = string
     identities           = optional(list(string), [])
     identity_type        = optional(string)
     source_access_levels = optional(list(string), [])
@@ -184,6 +184,14 @@ variable "ingress_policies" {
   }))
   default  = []
   nullable = false
+
+  validation {
+    condition = (
+      length(distinct([for policy in var.ingress_policies : policy.title])) == length(var.ingress_policies) &&
+      !anytrue([for policy in var.ingress_policies : contains(["Deployers", "Cloud Billing budget notifications"], policy.title)])
+    )
+    error_message = "The ingress rules' titles must be unique, and differ from the deployers' and Cloud Billing's rules."
+  }
 }
 
 variable "egress_policies" {

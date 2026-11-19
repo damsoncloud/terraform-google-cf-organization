@@ -33,36 +33,38 @@ run "enforced" {
 
   assert {
     condition = (
-      google_access_context_manager_access_policy.this[0].parent == "organizations/123456789012" &&
-      google_access_context_manager_service_perimeter.this.parent == "accessPolicies/555555555555" &&
-      google_access_context_manager_service_perimeter.this.name == "accessPolicies/555555555555/servicePerimeters/cloud_foundations_production" &&
-      google_access_context_manager_service_perimeter.this.title == "Cloud Foundations and production" &&
-      google_access_context_manager_service_perimeter.this.perimeter_type == "PERIMETER_TYPE_REGULAR" &&
-      google_access_context_manager_service_perimeter.this.use_explicit_dry_run_spec
+      google_access_context_manager_access_policy.organization[0].parent == "organizations/123456789012" &&
+      google_access_context_manager_service_perimeter.foundations.parent == "accessPolicies/555555555555" &&
+      google_access_context_manager_service_perimeter.foundations.name == "accessPolicies/555555555555/servicePerimeters/cloud_foundations_production" &&
+      google_access_context_manager_service_perimeter.foundations.title == "Cloud Foundations and production" &&
+      google_access_context_manager_service_perimeter.foundations.perimeter_type == "PERIMETER_TYPE_REGULAR" &&
+      google_access_context_manager_service_perimeter.foundations.use_explicit_dry_run_spec
     )
     error_message = "A regular perimeter with an explicit dry-run configuration must be created in a new organisation access policy."
   }
 
   assert {
     condition = (
-      length(google_access_context_manager_service_perimeter.this.status[0].restricted_services) == 74 &&
-      google_access_context_manager_service_perimeter.this.status[0].restricted_services == google_access_context_manager_service_perimeter.this.spec[0].restricted_services &&
-      contains(google_access_context_manager_service_perimeter.this.status[0].restricted_services, "storage.googleapis.com") &&
-      !contains(google_access_context_manager_service_perimeter.this.status[0].restricted_services, "iam.googleapis.com")
+      length(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services) == 74 &&
+      google_access_context_manager_service_perimeter.foundations.status[0].restricted_services == google_access_context_manager_service_perimeter.foundations.spec[0].restricted_services &&
+      contains(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services, "storage.googleapis.com") &&
+      !contains(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services, "iam.googleapis.com")
     )
     error_message = "The enforced and dry-run configurations must restrict the generally available supported services."
   }
 
   assert {
     condition = (
-      [for policy in google_access_context_manager_service_perimeter.this.status[0].ingress_policies : policy.title] == ["Deployers", "Cloud Billing budget notifications"] &&
-      google_access_context_manager_service_perimeter.this.status[0].ingress_policies[0].ingress_from[0].identities == toset([
+      toset(keys(google_access_context_manager_service_perimeter_ingress_policy.rules)) == toset(["Deployers", "Cloud Billing budget notifications"]) &&
+      keys(google_access_context_manager_service_perimeter_dry_run_ingress_policy.rules) == keys(google_access_context_manager_service_perimeter_ingress_policy.rules) &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].perimeter == output.perimeter_name &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_from[0].identities == tolist([
         "serviceAccount:tf-bootstrap@cmn-cf-bootstrap-a1b2.iam.gserviceaccount.com",
         "serviceAccount:tf-plan@cmn-cf-bootstrap-a1b2.iam.gserviceaccount.com",
       ]) &&
-      google_access_context_manager_service_perimeter.this.status[0].ingress_policies[0].ingress_from[0].sources[0].access_level == "*" &&
-      google_access_context_manager_service_perimeter.this.status[0].ingress_policies[0].ingress_to[0].operations[0].service_name == "*" &&
-      google_access_context_manager_service_perimeter.this.status[0].ingress_policies[1].ingress_to[0].operations[0].method_selectors[0].method == "google.pubsub.v1.Publisher.Publish"
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_from[0].sources[0].access_level == "*" &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_to[0].operations[0].service_name == "*" &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Cloud Billing budget notifications"].ingress_to[0].operations[0].method_selectors[0].method == "google.pubsub.v1.Publisher.Publish"
     )
     error_message = "The deployers must access the perimeter from any source, and Cloud Billing must publish budget notifications."
   }
@@ -94,10 +96,10 @@ run "dry_run" {
 
   assert {
     condition = (
-      length(google_access_context_manager_service_perimeter.this.status[0].restricted_services) == 0 &&
-      length(google_access_context_manager_service_perimeter.this.status[0].ingress_policies) == 0 &&
-      length(google_access_context_manager_service_perimeter.this.spec[0].restricted_services) == 74 &&
-      length(google_access_context_manager_service_perimeter.this.spec[0].ingress_policies) == 2
+      length(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services) == 0 &&
+      length(google_access_context_manager_service_perimeter_ingress_policy.rules) == 0 &&
+      length(google_access_context_manager_service_perimeter.foundations.spec[0].restricted_services) == 74 &&
+      length(google_access_context_manager_service_perimeter_dry_run_ingress_policy.rules) == 2
     )
     error_message = "In dry-run mode, only the dry-run configuration must restrict services and hold the rules."
   }
@@ -139,20 +141,20 @@ run "existing_access_policy_and_rules" {
 
   assert {
     condition = (
-      length(google_access_context_manager_access_policy.this) == 0 &&
-      google_access_context_manager_service_perimeter.this.name == "accessPolicies/777777777777/servicePerimeters/foundations" &&
-      google_access_context_manager_access_level.this["office"].name == "accessPolicies/777777777777/accessLevels/office"
+      length(google_access_context_manager_access_policy.organization) == 0 &&
+      google_access_context_manager_service_perimeter.foundations.name == "accessPolicies/777777777777/servicePerimeters/foundations" &&
+      google_access_context_manager_access_level.levels["office"].name == "accessPolicies/777777777777/accessLevels/office"
     )
     error_message = "The perimeter and access levels must be created in the given access policy, without creating one."
   }
 
   assert {
     condition = (
-      contains(google_access_context_manager_service_perimeter.this.status[0].restricted_services, "iam.googleapis.com") &&
-      [for policy in google_access_context_manager_service_perimeter.this.status[0].ingress_policies : policy.title] == ["Cloud Billing budget notifications", "Office"] &&
-      google_access_context_manager_service_perimeter.this.status[0].ingress_policies[1].ingress_from[0].sources[0].access_level == "accessPolicies/777777777777/accessLevels/office" &&
-      google_access_context_manager_service_perimeter.this.status[0].ingress_policies[1].ingress_to[0].operations[0].method_selectors[0].method == "*" &&
-      google_access_context_manager_service_perimeter.this.status[0].egress_policies[0].egress_to[0].resources == toset(["projects/888888888888"])
+      contains(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services, "iam.googleapis.com") &&
+      toset(keys(google_access_context_manager_service_perimeter_ingress_policy.rules)) == toset(["Cloud Billing budget notifications", "Office"]) &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Office"].ingress_from[0].sources[0].access_level == "accessPolicies/777777777777/accessLevels/office" &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Office"].ingress_to[0].operations[0].method_selectors[0].method == "*" &&
+      google_access_context_manager_service_perimeter.foundations.status[0].egress_policies[0].egress_to[0].resources == toset(["projects/888888888888"])
     )
     error_message = "The additional services, access levels, ingress and egress rules must follow the inputs."
   }
@@ -198,4 +200,18 @@ run "invalid_perimeter_name" {
   }
 
   expect_failures = [var.perimeter_name]
+}
+
+run "duplicate_ingress_policy_title" {
+  command = plan
+
+  module {
+    source = "./modules/vpc-service-controls"
+  }
+
+  variables {
+    ingress_policies = [{ title = "Deployers", identity_type = "ANY_IDENTITY", source_access_levels = ["*"] }]
+  }
+
+  expect_failures = [var.ingress_policies]
 }

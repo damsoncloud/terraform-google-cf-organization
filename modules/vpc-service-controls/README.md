@@ -9,6 +9,9 @@ Submodule of [cf-organization](../../README.md) setting up VPC Service Controls,
 
 The modules creating the other projects in the perimeter, e.g. those of the `production` folder, add them with the `perimeter_name` output, to both the enforced and the
 dry-run configuration, using the `google_access_context_manager_service_perimeter_resource` and `google_access_context_manager_service_perimeter_dry_run_resource` resources.
+The modules owning flows into the perimeter, e.g. cf-observability's organisation-level log sink, add their ingress rules the same way, with the
+`google_access_context_manager_service_perimeter_ingress_policy` and `google_access_context_manager_service_perimeter_dry_run_ingress_policy` resources; the former only in
+`enforced` mode, as this submodule does with its own rules.
 
 The `mode` input supports a dry-run before the perimeter is enforced: the dry-run configuration always holds the restrictions and rules, whose violations are recorded in the audit
 logs; in `dry_run` mode, the enforced configuration holds the projects but restricts no service. A project can only be in one regular perimeter, so adding a project which is
@@ -47,7 +50,7 @@ module "vpc_service_controls" {
 | additional\_restricted\_services | Services restricted by the perimeter in addition to `restricted_services`. | `list(string)` | `[]` | no |
 | deployers | Emails of the service accounts deploying from outside the perimeter, e.g. GitHub-hosted runners, allowed to access the perimeter from any source: `tf-bootstrap`, `tf-plan` and the environment deployers of cf-bootstrap. | `list(string)` | `[]` | no |
 | egress\_policies | Egress rules: `identities` or `identity_type`, the principals allowed; `resources`, the projects outside the perimeter, e.g. `projects/<number>`, `*` for all, and `external_resources`, e.g. Amazon S3 buckets; `operations`, the methods by service, as in `ingress_policies`. | ```list(object({ title = optional(string) identities = optional(list(string), []) identity_type = optional(string) resources = optional(list(string), []) external_resources = optional(list(string), []) operations = optional(map(list(string)), { "*" = [] }) }))``` | `[]` | no |
-| ingress\_policies | Ingress rules in addition to the deployers' and Cloud Billing's: `identities` or `identity_type` (`ANY_IDENTITY`, `ANY_USER_ACCOUNT` or `ANY_SERVICE_ACCOUNT`), the principals allowed; `source_access_levels`, the names of `access_levels` or `*` for any source, and `source_resources`, e.g. `projects/<number>`; `resources`, the projects in the perimeter, `*` for all; `operations`, the methods by service, `*` for all services, and all methods of a service when its list is empty. | ```list(object({ title = optional(string) identities = optional(list(string), []) identity_type = optional(string) source_access_levels = optional(list(string), []) source_resources = optional(list(string), []) resources = optional(list(string), ["*"]) operations = optional(map(list(string)), { "*" = [] }) }))``` | `[]` | no |
+| ingress\_policies | Ingress rules in addition to the deployers' and Cloud Billing's, by their unique `title`: `identities` or `identity_type` (`ANY_IDENTITY`, `ANY_USER_ACCOUNT` or `ANY_SERVICE_ACCOUNT`), the principals allowed; `source_access_levels`, the names of `access_levels` or `*` for any source, and `source_resources`, e.g. `projects/<number>`; `resources`, the projects in the perimeter, `*` for all; `operations`, the methods by service, `*` for all services, and all methods of a service when its list is empty. | ```list(object({ title = string identities = optional(list(string), []) identity_type = optional(string) source_access_levels = optional(list(string), []) source_resources = optional(list(string), []) resources = optional(list(string), ["*"]) operations = optional(map(list(string)), { "*" = [] }) }))``` | `[]` | no |
 | mode | `dry_run` sets the restrictions and rules in the perimeter's dry-run configuration only, whose violations are recorded in the audit logs; `enforced` also enforces them. | `string` | n/a | yes |
 | organization\_id | ID of the organisation, the parent of the access policy created when `access_policy_id` is null. | `string` | n/a | yes |
 | perimeter\_name | Short name of the perimeter, unique in the access policy. | `string` | `"cloud_foundations_production"` | no |
@@ -59,6 +62,6 @@ module "vpc_service_controls" {
 | Name | Description |
 | ---- | ----------- |
 | access\_policy\_id | ID of the organisation's access policy. |
-| perimeter\_name | Resource name of the perimeter (`accessPolicies/<id>/servicePerimeters/<name>`), for the modules adding their projects to both its enforced and dry-run configurations. |
+| perimeter\_name | Resource name of the perimeter (`accessPolicies/<id>/servicePerimeters/<name>`), for the modules adding their projects and ingress rules to its enforced and dry-run configurations. |
 <!-- markdownlint-restore -->
 <!-- END_TF_DOCS -->

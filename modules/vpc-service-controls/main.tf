@@ -1,12 +1,12 @@
 locals {
-  access_policy_id = var.access_policy_id != null ? var.access_policy_id : google_access_context_manager_access_policy.this[0].name
+  access_policy_id = var.access_policy_id != null ? var.access_policy_id : google_access_context_manager_access_policy.organization[0].name
   access_policy    = "accessPolicies/${local.access_policy_id}"
   perimeter        = "${local.access_policy}/servicePerimeters/${var.perimeter_name}"
 
   restricted_services = distinct(concat(var.restricted_services, var.additional_restricted_services))
   enforced            = var.mode == "enforced"
 
-  ingress_policies = concat(
+  ingress_policies = { for policy in concat(
     length(var.deployers) == 0 ? [] : [{
       title                = "Deployers"
       identities           = [for email in var.deployers : "serviceAccount:${email}"]
@@ -29,17 +29,17 @@ locals {
     [for policy in var.ingress_policies : merge(policy, {
       source_access_levels = [for level in policy.source_access_levels : contains(keys(var.access_levels), level) ? "${local.access_policy}/accessLevels/${level}" : level]
     })],
-  )
+  ) : policy.title => policy }
 }
 
-resource "google_access_context_manager_access_policy" "this" {
+resource "google_access_context_manager_access_policy" "organization" {
   count = var.access_policy_id == null ? 1 : 0
 
   parent = "organizations/${var.organization_id}"
   title  = "Organisation access policy"
 }
 
-resource "google_access_context_manager_access_level" "this" {
+resource "google_access_context_manager_access_level" "levels" {
   for_each = var.access_levels
 
   parent = local.access_policy
@@ -55,7 +55,7 @@ resource "google_access_context_manager_access_level" "this" {
   }
 }
 
-resource "google_access_context_manager_service_perimeter" "this" {
+resource "google_access_context_manager_service_perimeter" "foundations" {
   parent                    = local.access_policy
   name                      = local.perimeter
   title                     = "Cloud Foundations and production"
@@ -65,55 +65,6 @@ resource "google_access_context_manager_service_perimeter" "this" {
   # In dry-run mode, the enforced configuration holds the projects but restricts no service
   status {
     restricted_services = local.enforced ? local.restricted_services : []
-
-    dynamic "ingress_policies" {
-      for_each = local.enforced ? local.ingress_policies : []
-
-      content {
-        title = ingress_policies.value.title
-
-        ingress_from {
-          identities    = length(ingress_policies.value.identities) > 0 ? ingress_policies.value.identities : null
-          identity_type = ingress_policies.value.identity_type
-
-          dynamic "sources" {
-            for_each = ingress_policies.value.source_access_levels
-
-            content {
-              access_level = sources.value
-            }
-          }
-
-          dynamic "sources" {
-            for_each = ingress_policies.value.source_resources
-
-            content {
-              resource = sources.value
-            }
-          }
-        }
-
-        ingress_to {
-          resources = ingress_policies.value.resources
-
-          dynamic "operations" {
-            for_each = ingress_policies.value.operations
-
-            content {
-              service_name = operations.key
-
-              dynamic "method_selectors" {
-                for_each = operations.key == "*" ? [] : (length(operations.value) > 0 ? operations.value : ["*"])
-
-                content {
-                  method = method_selectors.value
-                }
-              }
-            }
-          }
-        }
-      }
-    }
 
     dynamic "egress_policies" {
       for_each = local.enforced ? var.egress_policies : []
@@ -154,55 +105,6 @@ resource "google_access_context_manager_service_perimeter" "this" {
   spec {
     restricted_services = local.restricted_services
 
-    dynamic "ingress_policies" {
-      for_each = local.ingress_policies
-
-      content {
-        title = ingress_policies.value.title
-
-        ingress_from {
-          identities    = length(ingress_policies.value.identities) > 0 ? ingress_policies.value.identities : null
-          identity_type = ingress_policies.value.identity_type
-
-          dynamic "sources" {
-            for_each = ingress_policies.value.source_access_levels
-
-            content {
-              access_level = sources.value
-            }
-          }
-
-          dynamic "sources" {
-            for_each = ingress_policies.value.source_resources
-
-            content {
-              resource = sources.value
-            }
-          }
-        }
-
-        ingress_to {
-          resources = ingress_policies.value.resources
-
-          dynamic "operations" {
-            for_each = ingress_policies.value.operations
-
-            content {
-              service_name = operations.key
-
-              dynamic "method_selectors" {
-                for_each = operations.key == "*" ? [] : (length(operations.value) > 0 ? operations.value : ["*"])
-
-                content {
-                  method = method_selectors.value
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
     dynamic "egress_policies" {
       for_each = var.egress_policies
 
@@ -238,25 +140,134 @@ resource "google_access_context_manager_service_perimeter" "this" {
     }
   }
 
-  # The projects are added by the membership resources, here and in the modules creating the projects
+  # The projects and ingress rules are added by their own resources, here and in the modules creating the projects and the flows
   lifecycle {
-    ignore_changes = [status[0].resources, spec[0].resources]
+    ignore_changes = [status[0].resources, spec[0].resources, status[0].ingress_policies, spec[0].ingress_policies]
   }
 
-  depends_on = [google_access_context_manager_access_level.this]
+  depends_on = [google_access_context_manager_access_level.levels]
 }
 
 # Each project is added to both configurations, so that switching the mode does not change the membership
 resource "google_access_context_manager_service_perimeter_resource" "projects" {
   for_each = var.projects
 
-  perimeter_name = google_access_context_manager_service_perimeter.this.name
+  perimeter_name = google_access_context_manager_service_perimeter.foundations.name
   resource       = "projects/${each.value}"
 }
 
 resource "google_access_context_manager_service_perimeter_dry_run_resource" "projects" {
   for_each = var.projects
 
-  perimeter_name = google_access_context_manager_service_perimeter.this.name
+  perimeter_name = google_access_context_manager_service_perimeter.foundations.name
   resource       = "projects/${each.value}"
+}
+
+# Rules are added to the enforced configuration only when enforced, and always to the dry-run configuration, which holds the full restrictions
+resource "google_access_context_manager_service_perimeter_ingress_policy" "rules" {
+  for_each = local.enforced ? local.ingress_policies : {}
+
+  title     = each.key
+  perimeter = google_access_context_manager_service_perimeter.foundations.name
+
+  ingress_from {
+    identities    = length(each.value.identities) > 0 ? each.value.identities : null
+    identity_type = each.value.identity_type
+
+    dynamic "sources" {
+      for_each = each.value.source_access_levels
+
+      content {
+        access_level = sources.value
+      }
+    }
+
+    dynamic "sources" {
+      for_each = each.value.source_resources
+
+      content {
+        resource = sources.value
+      }
+    }
+  }
+
+  ingress_to {
+    resources = each.value.resources
+
+    dynamic "operations" {
+      for_each = each.value.operations
+
+      content {
+        service_name = operations.key
+
+        dynamic "method_selectors" {
+          for_each = operations.key == "*" ? [] : (length(operations.value) > 0 ? operations.value : ["*"])
+
+          content {
+            method = method_selectors.value
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [google_access_context_manager_access_level.levels]
+}
+
+resource "google_access_context_manager_service_perimeter_dry_run_ingress_policy" "rules" {
+  for_each = local.ingress_policies
+
+  title     = each.key
+  perimeter = google_access_context_manager_service_perimeter.foundations.name
+
+  ingress_from {
+    identities    = length(each.value.identities) > 0 ? each.value.identities : null
+    identity_type = each.value.identity_type
+
+    dynamic "sources" {
+      for_each = each.value.source_access_levels
+
+      content {
+        access_level = sources.value
+      }
+    }
+
+    dynamic "sources" {
+      for_each = each.value.source_resources
+
+      content {
+        resource = sources.value
+      }
+    }
+  }
+
+  ingress_to {
+    resources = each.value.resources
+
+    dynamic "operations" {
+      for_each = each.value.operations
+
+      content {
+        service_name = operations.key
+
+        dynamic "method_selectors" {
+          for_each = operations.key == "*" ? [] : (length(operations.value) > 0 ? operations.value : ["*"])
+
+          content {
+            method = method_selectors.value
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [google_access_context_manager_access_level.levels]
 }

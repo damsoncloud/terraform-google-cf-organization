@@ -113,7 +113,7 @@ locals {
   ) }
 }
 
-resource "google_org_policy_policy" "this" {
+resource "google_org_policy_policy" "policies" {
   for_each = local.policies
 
   name   = "${each.value.parent}/policies/${each.value.constraint}"

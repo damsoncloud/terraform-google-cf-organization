@@ -3,7 +3,7 @@ locals {
 }
 
 # Firebase is added to the projects in the Firebase console, choosing the existing project
-resource "google_project" "this" {
+resource "google_project" "firebase" {
   for_each = var.projects
 
   name                = each.value.project_id
@@ -18,10 +18,10 @@ resource "google_project" "this" {
   }
 }
 
-resource "google_project_service" "this" {
+resource "google_project_service" "firebase" {
   for_each = local.services
 
-  project            = google_project.this[each.value.environment].project_id
+  project            = google_project.firebase[each.value.environment].project_id
   service            = each.value.service
   disable_on_destroy = false
 }
