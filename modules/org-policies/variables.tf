@@ -109,6 +109,7 @@ variable "allowed_services" {
     "threatdetection.googleapis.com",
     "translate.googleapis.com",
     "vectorsearch.googleapis.com",
+    "workflowexecutions.googleapis.com",
     "workflows.googleapis.com",
     "workloadidentity.googleapis.com",
     # keep-sorted end
