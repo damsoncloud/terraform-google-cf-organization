@@ -3,6 +3,7 @@ mock_provider "google" {
     defaults = {
       email  = "billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
       member = "serviceAccount:billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
+      name   = "projects/cmn-observability-c3d4/serviceAccounts/billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
     }
   }
 
@@ -235,6 +236,14 @@ run "billing_disabler" {
     condition     = output.billing_disabler_email == "billing-disabler@cmn-observability-c3d4.iam.gserviceaccount.com"
     error_message = "The billing disabler email must be returned as an output."
   }
+  assert {
+    condition = (
+      google_service_account_iam_member.billing_disabler_deployer.role == "roles/iam.serviceAccountUser" &&
+      google_service_account_iam_member.billing_disabler_deployer.member == "serviceAccount:tf-bootstrap@cmn-cf-bootstrap-a1b2.iam.gserviceaccount.com"
+    )
+    error_message = "tf-bootstrap must be able to attach the billing disabler's service account to its Cloud Run service."
+  }
+
 }
 
 run "organization_iam" {

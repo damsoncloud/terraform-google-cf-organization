@@ -27,3 +27,10 @@ resource "google_billing_account_iam_member" "billing_disabler" {
   role               = "roles/billing.viewer"
   member             = google_service_account.billing_disabler.member
 }
+
+# cf-observability attaches the service account to the billing disabler's Cloud Run service as tf-bootstrap, which requires acting as it
+resource "google_service_account_iam_member" "billing_disabler_deployer" {
+  service_account_id = google_service_account.billing_disabler.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${var.tf_bootstrap_email}"
+}
