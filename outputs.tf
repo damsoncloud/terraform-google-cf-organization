@@ -62,3 +62,17 @@ output "perimeter_groups" {
     ]]),
   )))
 }
+
+output "defender_for_cloud" {
+  description = <<-EOT
+  The Microsoft Defender for Cloud integration's organisation-level part, for the `azure_integration` input of cf-observability;
+    null when not created: `service_accounts`, their emails by name;
+    `log_collection_role`, the custom role consuming the audit log subscription;
+    `external_members`, Microsoft's identities granted organisation roles, for the org-policies submodule's `additional_allowed_members`.
+  EOT
+  value = var.defender_for_cloud ? {
+    service_accounts    = module.defender_for_cloud[0].service_accounts
+    log_collection_role = module.defender_for_cloud[0].log_collection_role
+    external_members    = module.defender_for_cloud[0].external_members
+  } : null
+}

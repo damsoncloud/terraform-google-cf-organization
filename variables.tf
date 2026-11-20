@@ -370,3 +370,10 @@ variable "perimeter_groups" {
     error_message = "The perimeter_groups environments must be environment folders of the folders input."
   }
 }
+
+variable "defender_for_cloud" {
+  description = "Whether the organisation-level part of the Microsoft Defender for Cloud integration is created ([`modules/defender-for-cloud`](modules/defender-for-cloud)): its service accounts in the Observability project, its organisation custom roles and its organisation roles, including those of Microsoft's agentless scanning identities, which the org-policies submodule must allow (the `defender_for_cloud` output's `external_members`). cf-observability sets up the rest of the integration."
+  type        = bool
+  default     = false
+  nullable    = false
+}

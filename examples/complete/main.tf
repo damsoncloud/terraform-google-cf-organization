@@ -33,6 +33,7 @@ module "organization" {
   firebase = {
     environments = ["development"]
   }
+  defender_for_cloud = true
 }
 
 module "org_policies" {
@@ -49,6 +50,7 @@ module "org_policies" {
     project_ids      = [for project in values(module.organization.firebase_projects) : project.project_id]
     allowed_services = module.organization.firebase_apis
   }
+  additional_allowed_members = module.organization.defender_for_cloud.external_members
 }
 
 module "vpc_service_controls" {

@@ -29,3 +29,11 @@ module "firebase" {
   billing_account = var.billing_account
   apis            = var.firebase.apis
 }
+
+module "defender_for_cloud" {
+  source = "./modules/defender-for-cloud"
+  count  = var.defender_for_cloud ? 1 : 0
+
+  organization_id = var.organization_id
+  project_id      = google_project.observability.project_id
+}

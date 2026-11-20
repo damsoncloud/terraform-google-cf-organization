@@ -5,6 +5,7 @@ locals {
     [for role in var.tf_plan_organization_roles : { role = role, member = "serviceAccount:${var.tf_plan_email}" }],
     [{ role = local.billing_disabler_organization_role, member = google_service_account.billing_disabler.member }],
     flatten([for role, members in var.additional_organization_bindings : [for member in members : { role = role, member = member }]]),
+    flatten(module.defender_for_cloud[*].organization_bindings),
   )
 
   folder_members = { for folder in keys(var.folders) : folder => concat(

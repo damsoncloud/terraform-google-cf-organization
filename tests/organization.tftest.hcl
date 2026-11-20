@@ -93,6 +93,33 @@ run "invalid_perimeter_groups" {
   expect_failures = [var.perimeter_groups]
 }
 
+run "defender_for_cloud_disabled" {
+  command = plan
+
+  assert {
+    condition     = output.defender_for_cloud == null && length(module.defender_for_cloud) == 0
+    error_message = "The Defender for Cloud integration must not be created by default."
+  }
+}
+
+run "defender_for_cloud" {
+  variables {
+    defender_for_cloud = true
+  }
+
+  assert {
+    condition = (
+      length(module.defender_for_cloud) == 1 &&
+      contains(
+        [for binding in data.google_iam_policy.organization.binding : binding.role if length(binding.condition) == 0],
+        "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+      ) &&
+      length(output.defender_for_cloud.external_members) == 2
+    )
+    error_message = "The Defender for Cloud organisation roles must be kept by the authoritative organisation IAM policy."
+  }
+}
+
 run "generated_project_ids" {
   assert {
     condition     = output.observability_project_id == "cmn-observability-c3d4" && google_project.observability.name == "cmn-observability-c3d4"

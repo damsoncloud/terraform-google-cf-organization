@@ -7,7 +7,8 @@ Terraform module of the Damson Cloud GCP Cloud Foundations configuring a Google 
 * authoritative organisation and folder IAM, including the organisation's Data Access audit log configuration,
 * the organisation-level Model Armour floor setting,
 * the Apps Script project, the Standard Cloud Project of every Apps Script ([`modules/apps-script`](modules/apps-script)), created by default,
-* optionally, one Firebase project per environment folder ([`modules/firebase`](modules/firebase)), to which Firebase is added in the Firebase console.
+* optionally, one Firebase project per environment folder ([`modules/firebase`](modules/firebase)), to which Firebase is added in the Firebase console,
+* optionally, the organisation-level part of the Microsoft Defender for Cloud integration ([`modules/defender-for-cloud`](modules/defender-for-cloud)).
 
 Submodules, applied in the same Terraform state:
 
@@ -61,6 +62,7 @@ the perimeter and Firebase.
 | billing\_admins\_group\_name | Name of the group administering the billing account, without the domain, notified of the budgets' alerts. | `string` | `"gcp-billing-admins"` | no |
 | bootstrap\_project\_id | ID of the bootstrap project, e.g. the `project_id` output of cf-bootstrap, which gets a budget. | `string` | n/a | yes |
 | budget\_amounts | Budget amounts of the foundations' projects, in the billing account's currency, alerting at 50%, 70% and 100%. | ```object({ bootstrap = optional(number, 100) observability = optional(number, 100) api_management = optional(number, 100) })``` | `{}` | no |
+| defender\_for\_cloud | Whether the organisation-level part of the Microsoft Defender for Cloud integration is created ([`modules/defender-for-cloud`](modules/defender-for-cloud)): its service accounts in the Observability project, its organisation custom roles and its organisation roles, including those of Microsoft's agentless scanning identities, which the org-policies submodule must allow (the `defender_for_cloud` output's `external_members`). cf-observability sets up the rest of the integration. | `bool` | `false` | no |
 | domain | Domain of the organisation's groups, e.g. `example.com` for `gcp-organization-admins@example.com`. | `string` | n/a | yes |
 | environment\_deployer\_roles | Roles of each environment deployer service account on its environment folder. | `list(string)` | ```[ "roles/resourcemanager.projectIamAdmin", "roles/writer" ]``` | no |
 | environment\_group\_roles | Roles of each environment folder's groups by group name suffix; e.g. `sres` grants the roles to `gcp-dev-sres` on the `development` folder. | `map(list(string))` | ```{ "sres": [ "roles/iam.siteReliabilityEngineer" ], "viewers": [ "roles/reader" ] }``` | no |
@@ -91,6 +93,7 @@ the perimeter and Firebase.
 | billing\_disabler\_email | Email of the billing disabler service account, running the billing disabler deployed by cf-observability. |
 | billing\_disabler\_project\_roles | Roles of the billing disabler service account on each project with the billing disabler enabled, granted by cf-gcp-project. |
 | billing\_notification\_channel | ID of the notification channel of the billing administrators group (`projects/<project>/notificationChannels/<id>`). |
+| defender\_for\_cloud | The Microsoft Defender for Cloud integration's organisation-level part, for the `azure_integration` input of cf-observability;   null when not created: `service_accounts`, their emails by name;   `log_collection_role`, the custom role consuming the audit log subscription;   `external_members`, Microsoft's identities granted organisation roles, for the org-policies submodule's `additional_allowed_members`. |
 | firebase\_apis | Firebase APIs enabled in the Firebase projects, for the org-policies submodule's `firebase` input; empty when Firebase is not set up. |
 | firebase\_projects | IDs and numbers of the Firebase projects, by environment folder name, e.g. for the org-policies submodule's `firebase` input and the perimeter's membership of the production one. |
 | model\_armor | Filters of the organisation's Model Armour floor setting, the `model_armor` input with its defaults except `enforcement`, for the project-level Agent Platform and Google MCP server floor settings of cf-gcp-project, which replace the organisation's filters and screen only with their own enforcement enabled. |
