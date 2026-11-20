@@ -24,6 +24,7 @@ variables {
     "tf-bootstrap@cmn-cf-bootstrap-a1b2.iam.gserviceaccount.com",
     "tf-plan@cmn-cf-bootstrap-a1b2.iam.gserviceaccount.com",
   ]
+  groups = ["gcp-cmn-sres@example.com", "gcp-organization-admins@example.com"]
 }
 
 run "enforced" {
@@ -55,7 +56,10 @@ run "enforced" {
 
   assert {
     condition = (
-      toset(keys(google_access_context_manager_service_perimeter_ingress_policy.rules)) == toset(["Deployers", "Cloud Billing budget notifications"]) &&
+      toset(keys(google_access_context_manager_service_perimeter_ingress_policy.rules)) == toset(["Deployers", "Foundations' groups", "Cloud Billing budget notifications"]) &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Foundations' groups"].ingress_from[0].identities == tolist(["group:gcp-cmn-sres@example.com", "group:gcp-organization-admins@example.com"]) &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Foundations' groups"].ingress_from[0].sources[0].access_level == "*" &&
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Foundations' groups"].ingress_to[0].operations[0].service_name == "*" &&
       keys(google_access_context_manager_service_perimeter_dry_run_ingress_policy.rules) == keys(google_access_context_manager_service_perimeter_ingress_policy.rules) &&
       google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].perimeter == output.perimeter_name &&
       google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_from[0].identities == tolist([
@@ -66,7 +70,7 @@ run "enforced" {
       google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_to[0].operations[0].service_name == "*" &&
       google_access_context_manager_service_perimeter_ingress_policy.rules["Cloud Billing budget notifications"].ingress_to[0].operations[0].method_selectors[0].method == "google.pubsub.v1.Publisher.Publish"
     )
-    error_message = "The deployers must access the perimeter from any source, and Cloud Billing must publish budget notifications."
+    error_message = "The deployers and the foundations' groups must access the perimeter from any source, and Cloud Billing must publish budget notifications."
   }
 
   assert {
@@ -99,7 +103,7 @@ run "dry_run" {
       length(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services) == 0 &&
       length(google_access_context_manager_service_perimeter_ingress_policy.rules) == 0 &&
       length(google_access_context_manager_service_perimeter.foundations.spec[0].restricted_services) == 74 &&
-      length(google_access_context_manager_service_perimeter_dry_run_ingress_policy.rules) == 2
+      length(google_access_context_manager_service_perimeter_dry_run_ingress_policy.rules) == 3
     )
     error_message = "In dry-run mode, only the dry-run configuration must restrict services and hold the rules."
   }
@@ -122,6 +126,7 @@ run "existing_access_policy_and_rules" {
     perimeter_name                 = "foundations"
     additional_restricted_services = ["iam.googleapis.com"]
     deployers                      = []
+    groups                         = []
     access_levels = {
       office = { ip_subnetworks = ["203.0.113.0/24"] }
     }

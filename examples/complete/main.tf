@@ -66,4 +66,5 @@ module "vpc_service_controls" {
     [module.bootstrap.tf_bootstrap_email, module.bootstrap.tf_plan_email],
     values(module.bootstrap.tf_environment_emails),
   )
+  groups = module.organization.perimeter_groups
 }

@@ -54,6 +54,44 @@ variables {
   }
 }
 
+run "perimeter_groups" {
+  command = plan
+
+  assert {
+    condition = output.perimeter_groups == tolist([
+      "gcp-cmn-sres@example.com",
+      "gcp-cmn-viewers@example.com",
+      "gcp-organization-admins@example.com",
+      "gcp-prod-sres@example.com",
+      "gcp-prod-viewers@example.com",
+    ])
+    error_message = "The organisation admins and the SREs and viewers of the common and production environments must access the perimeter by default."
+  }
+}
+
+run "custom_perimeter_groups" {
+  command = plan
+
+  variables {
+    perimeter_groups = { organization = [], environments = ["production", "certification"], suffixes = ["sres"] }
+  }
+
+  assert {
+    condition     = output.perimeter_groups == tolist(["gcp-cert-sres@example.com", "gcp-cmn-sres@example.com", "gcp-prod-sres@example.com"])
+    error_message = "The perimeter groups must follow the input."
+  }
+}
+
+run "invalid_perimeter_groups" {
+  command = plan
+
+  variables {
+    perimeter_groups = { environments = ["legacy"] }
+  }
+
+  expect_failures = [var.perimeter_groups]
+}
+
 run "generated_project_ids" {
   assert {
     condition     = output.observability_project_id == "cmn-observability-c3d4" && google_project.observability.name == "cmn-observability-c3d4"
@@ -357,6 +395,12 @@ run "renamed_common_environment" {
       shared      = { id = "folders/122222222222", short_name = "shr", common = true }
     }
     tf_environment_emails = {}
+    perimeter_groups      = { environments = [] }
+  }
+
+  assert {
+    condition     = output.perimeter_groups == tolist(["gcp-organization-admins@example.com", "gcp-shr-sres@example.com", "gcp-shr-viewers@example.com"])
+    error_message = "The common environment's perimeter groups must be named after its short name."
   }
 
   assert {
@@ -384,6 +428,7 @@ run "generated_project_id_too_long" {
       common      = { id = "folders/111111111111", short_name = "common-env", common = true }
     }
     tf_environment_emails = {}
+    perimeter_groups      = { environments = [] }
   }
 
   expect_failures = [google_project.api_management]

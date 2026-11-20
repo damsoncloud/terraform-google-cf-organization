@@ -16,6 +16,15 @@ locals {
       resources            = ["*"]
       operations           = { "*" = [] }
     }],
+    length(var.groups) == 0 ? [] : [{
+      title                = "Foundations' groups"
+      identities           = [for email in var.groups : "group:${email}"]
+      identity_type        = null
+      source_access_levels = ["*"]
+      source_resources     = []
+      resources            = ["*"]
+      operations           = { "*" = [] }
+    }],
     # Budget notifications published to the billing disabler's topic
     [{
       title                = "Cloud Billing budget notifications"

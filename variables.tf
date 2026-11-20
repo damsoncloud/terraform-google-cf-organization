@@ -348,3 +348,25 @@ variable "firebase" {
     error_message = "The firebase budget_amount must be a positive whole number."
   }
 }
+
+variable "perimeter_groups" {
+  description = <<-EOT
+  The groups whose members access the VPC Service Controls perimeter's projects from outside it, from any source,
+    returned by the `perimeter_groups` output for the vpc-service-controls submodule's `groups` input:
+    `organization`, organisation groups by name, without the domain;
+    `environments`, the environment folders, besides the common environment's, whose groups are allowed;
+    `suffixes`, the suffixes of the allowed `gcp-<short name>-<suffix>` groups of the common environment and those environments.
+  EOT
+  type = object({
+    organization = optional(list(string), ["gcp-organization-admins"])
+    environments = optional(list(string), ["production"])
+    suffixes     = optional(list(string), ["sres", "viewers"])
+  })
+  default  = {}
+  nullable = false
+
+  validation {
+    condition     = alltrue([for folder in var.perimeter_groups.environments : try(var.folders[folder].short_name != null, false)])
+    error_message = "The perimeter_groups environments must be environment folders of the folders input."
+  }
+}

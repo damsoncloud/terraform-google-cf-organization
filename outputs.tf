@@ -52,3 +52,13 @@ output "firebase_apis" {
   description = "Firebase APIs enabled in the Firebase projects, for the org-policies submodule's `firebase` input; empty when Firebase is not set up."
   value       = var.firebase == null ? [] : var.firebase.apis
 }
+
+output "perimeter_groups" {
+  description = "Emails of the groups whose members access the VPC Service Controls perimeter's projects from outside it, for the vpc-service-controls submodule's `groups` input."
+  value = sort(distinct(concat(
+    [for group in var.perimeter_groups.organization : "${group}@${var.domain}"],
+    flatten([for short_name in concat([local.common_short_name], [for folder in var.perimeter_groups.environments : var.folders[folder].short_name]) : [
+      for suffix in var.perimeter_groups.suffixes : "gcp-${short_name}-${suffix}@${var.domain}"
+    ]]),
+  )))
+}

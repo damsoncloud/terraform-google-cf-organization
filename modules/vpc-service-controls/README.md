@@ -4,7 +4,8 @@ Submodule of [cf-organization](../../README.md) setting up VPC Service Controls,
 
 * the organisation's access policy, unless an existing one is given; the perimeter is added to it, and its other perimeters are left as they are,
 * a regular perimeter restricting the generally available supported services which the organisation allows or the foundations use,
-* ingress rules for the deployers, e.g. from GitHub-hosted runners, and for Cloud Billing's budget notifications, and further access levels, ingress and egress rules,
+* ingress rules for the deployers, e.g. from GitHub-hosted runners, for the foundations' groups, e.g. the organisation administrators and the SREs and viewers of the common
+  and production environments, from any source, and for Cloud Billing's budget notifications, and further access levels, ingress and egress rules,
 * the membership of the given projects, e.g. the bootstrap and common projects.
 
 The modules creating the other projects in the perimeter, e.g. those of the `production` folder, add them with the `perimeter_name` output, to both the enforced and the
@@ -35,6 +36,7 @@ module "vpc_service_controls" {
     [module.bootstrap.tf_bootstrap_email, module.bootstrap.tf_plan_email],
     values(module.bootstrap.tf_environment_emails),
   )
+  groups = module.organization.perimeter_groups
 }
 ```
 
@@ -50,7 +52,8 @@ module "vpc_service_controls" {
 | additional\_restricted\_services | Services restricted by the perimeter in addition to `restricted_services`. | `list(string)` | `[]` | no |
 | deployers | Emails of the service accounts deploying from outside the perimeter, e.g. GitHub-hosted runners, allowed to access the perimeter from any source: `tf-bootstrap`, `tf-plan` and the environment deployers of cf-bootstrap. | `list(string)` | `[]` | no |
 | egress\_policies | Egress rules: `identities` or `identity_type`, the principals allowed; `resources`, the projects outside the perimeter, e.g. `projects/<number>`, `*` for all, and `external_resources`, e.g. Amazon S3 buckets; `operations`, the methods by service, as in `ingress_policies`. | ```list(object({ title = optional(string) identities = optional(list(string), []) identity_type = optional(string) resources = optional(list(string), []) external_resources = optional(list(string), []) operations = optional(map(list(string)), { "*" = [] }) }))``` | `[]` | no |
-| ingress\_policies | Ingress rules in addition to the deployers' and Cloud Billing's, by their unique `title`: `identities` or `identity_type` (`ANY_IDENTITY`, `ANY_USER_ACCOUNT` or `ANY_SERVICE_ACCOUNT`), the principals allowed; `source_access_levels`, the names of `access_levels` or `*` for any source, and `source_resources`, e.g. `projects/<number>`; `resources`, the projects in the perimeter, `*` for all; `operations`, the methods by service, `*` for all services, and all methods of a service when its list is empty. | ```list(object({ title = string identities = optional(list(string), []) identity_type = optional(string) source_access_levels = optional(list(string), []) source_resources = optional(list(string), []) resources = optional(list(string), ["*"]) operations = optional(map(list(string)), { "*" = [] }) }))``` | `[]` | no |
+| groups | Emails of the groups whose members access the perimeter's projects from outside it, from any source, e.g. the `perimeter_groups` output of cf-organization. For a stricter access, e.g. from the office network or managed devices only, leave it empty and use `access_levels` and `ingress_policies` instead. | `list(string)` | `[]` | no |
+| ingress\_policies | Ingress rules in addition to the deployers', the foundations' groups' and Cloud Billing's, by their unique `title`: `identities` or `identity_type` (`ANY_IDENTITY`, `ANY_USER_ACCOUNT` or `ANY_SERVICE_ACCOUNT`), the principals allowed; `source_access_levels`, the names of `access_levels` or `*` for any source, and `source_resources`, e.g. `projects/<number>`; `resources`, the projects in the perimeter, `*` for all; `operations`, the methods by service, `*` for all services, and all methods of a service when its list is empty. | ```list(object({ title = string identities = optional(list(string), []) identity_type = optional(string) source_access_levels = optional(list(string), []) source_resources = optional(list(string), []) resources = optional(list(string), ["*"]) operations = optional(map(list(string)), { "*" = [] }) }))``` | `[]` | no |
 | mode | `dry_run` sets the restrictions and rules in the perimeter's dry-run configuration only, whose violations are recorded in the audit logs; `enforced` also enforces them. | `string` | n/a | yes |
 | organization\_id | ID of the organisation, the parent of the access policy created when `access_policy_id` is null. | `string` | n/a | yes |
 | perimeter\_name | Short name of the perimeter, unique in the access policy. | `string` | `"cloud_foundations_production"` | no |
