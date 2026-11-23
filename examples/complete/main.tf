@@ -7,7 +7,7 @@ module "hierarchy" {
 
 module "bootstrap" {
   source  = "damsoncloud/cf-bootstrap/google"
-  version = "0.4.0"
+  version = "0.7.0"
 
   organization_id = var.organization_id
   folders         = module.hierarchy.folders
