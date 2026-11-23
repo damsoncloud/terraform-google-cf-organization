@@ -7,6 +7,7 @@ Terraform module of the Damson Cloud GCP Cloud Foundations configuring a Google 
 * authoritative organisation and folder IAM, including the organisation's Data Access audit log configuration,
 * the organisation-level Model Armour floor setting,
 * the Apps Script project, the Standard Cloud Project of every Apps Script ([`modules/apps-script`](modules/apps-script)), created by default,
+* optionally, the Shared VPC host project in the common environment's folder, configured by [cf-shared-vpc](https://github.com/damsoncloud/terraform-google-cf-shared-vpc),
 * optionally, one Firebase project per environment folder ([`modules/firebase`](modules/firebase)), to which Firebase is added in the Firebase console,
 * optionally, the organisation-level part of the Microsoft Defender for Cloud integration ([`modules/defender-for-cloud`](modules/defender-for-cloud)).
 
@@ -77,6 +78,7 @@ the perimeter and Firebase.
 | organization\_group\_roles | Organisation roles by group name, without the domain. | `map(list(string))` | ```{ "gcp-billing-admins": [ "roles/billing.admin", "roles/billing.creator" ], "gcp-organization-admins": [ "roles/billing.user", "roles/resourcemanager.organizationAdmin", "roles/resourcemanager.projectCreator" ] }``` | no |
 | organization\_id | ID of the organisation, whose IAM policy is set authoritatively. | `string` | n/a | yes |
 | perimeter\_groups | The groups whose members access the VPC Service Controls perimeter's projects from outside it, from any source,   returned by the `perimeter_groups` output for the vpc-service-controls submodule's `groups` input:   `organization`, organisation groups by name, without the domain;   `environments`, the environment folders, besides the common environment's, whose groups are allowed;   `suffixes`, the suffixes of the allowed `gcp-<short name>-<suffix>` groups of the common environment and those environments. | ```object({ organization = optional(list(string), ["gcp-organization-admins"]) environments = optional(list(string), ["production"]) suffixes = optional(list(string), ["sres", "viewers"]) })``` | `{}` | no |
+| shared\_vpc | The Shared VPC host project in the common environment's folder, configured by cf-shared-vpc; not created when null: `project_id`, generated as `<common short name>-shared-vpcs-<suffix>` when null; `budget_amount`, in the billing account's currency. | ```object({ project_id = optional(string) budget_amount = optional(number, 100) })``` | `null` | no |
 | tf\_bootstrap\_email | Email of the `tf-bootstrap` service account, e.g. the `tf_bootstrap_email` output of cf-bootstrap. | `string` | n/a | yes |
 | tf\_bootstrap\_organization\_roles | Organisation roles of `tf-bootstrap`, e.g. the `tf_bootstrap_organization_roles` output of cf-bootstrap. | `list(string)` | n/a | yes |
 | tf\_environment\_emails | Emails of the environment deployer service accounts by environment folder name, e.g. the `tf_environment_emails` output of cf-bootstrap. Each gets `environment_deployer_roles` on its folder. | `map(string)` | n/a | yes |
@@ -100,6 +102,7 @@ the perimeter and Firebase.
 | observability\_project\_id | ID of the Observability project. |
 | observability\_project\_number | Number of the Observability project, e.g. for the membership of the vpc-service-controls submodule's perimeter. |
 | perimeter\_groups | Emails of the groups whose members access the VPC Service Controls perimeter's projects from outside it, for the vpc-service-controls submodule's `groups` input. |
+| shared\_vpc\_project | ID and number of the Shared VPC host project, for cf-shared-vpc; null when not created. |
 <!-- markdownlint-restore -->
 <!-- END_TF_DOCS -->
 

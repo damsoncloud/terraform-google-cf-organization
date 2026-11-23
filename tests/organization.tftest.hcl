@@ -863,3 +863,48 @@ run "invalid_apps_script_budget" {
 
   expect_failures = [var.apps_script]
 }
+
+run "shared_vpc_disabled" {
+  command = plan
+
+  assert {
+    condition     = length(google_project.shared_vpc) == 0 && output.shared_vpc_project == null && !contains(keys(google_billing_budget.projects), "shared_vpc")
+    error_message = "The Shared VPC host project must not be created by default."
+  }
+}
+
+run "shared_vpc" {
+  variables {
+    shared_vpc = { budget_amount = 50 }
+  }
+
+  assert {
+    condition = (
+      google_project.shared_vpc[0].project_id == "cmn-shared-vpcs-c3d4" &&
+      google_project.shared_vpc[0].folder_id == "folders/111111111111" &&
+      google_project.shared_vpc[0].billing_account == "012345-6789AB-CDEF01" &&
+      !google_project.shared_vpc[0].auto_create_network &&
+      output.shared_vpc_project.project_id == "cmn-shared-vpcs-c3d4" &&
+      output.shared_vpc_project.number == google_project.shared_vpc[0].number
+    )
+    error_message = "The host project must be generated as cmn-shared-vpcs-<suffix> in the common folder, without the default network."
+  }
+
+  assert {
+    condition = (
+      google_billing_budget.projects["shared_vpc"].budget_filter[0].projects == toset(["projects/${google_project.shared_vpc[0].number}"]) &&
+      google_billing_budget.projects["shared_vpc"].amount[0].specified_amount[0].units == "50"
+    )
+    error_message = "The host project must have its own budget."
+  }
+}
+
+run "invalid_shared_vpc" {
+  command = plan
+
+  variables {
+    shared_vpc = { project_id = "Shared_VPC", budget_amount = 0.5 }
+  }
+
+  expect_failures = [var.shared_vpc]
+}

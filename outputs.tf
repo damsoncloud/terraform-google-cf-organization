@@ -38,6 +38,11 @@ output "api_management_project_number" {
   value       = google_project.api_management.number
 }
 
+output "shared_vpc_project" {
+  description = "ID and number of the Shared VPC host project, for cf-shared-vpc; null when not created."
+  value       = var.shared_vpc == null ? null : { project_id = google_project.shared_vpc[0].project_id, number = google_project.shared_vpc[0].number }
+}
+
 output "apps_script_project" {
   description = "ID and number of the Apps Script project, the Standard Cloud Project of every Apps Script; null when not created."
   value       = var.apps_script == null ? null : module.apps_script[0].project

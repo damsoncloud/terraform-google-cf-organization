@@ -304,6 +304,29 @@ variable "apps_script" {
   }
 }
 
+variable "shared_vpc" {
+  description = <<-EOT
+    The Shared VPC host project in the common environment's folder, configured by cf-shared-vpc; not created when null:
+    `project_id`, generated as `<common short name>-shared-vpcs-<suffix>` when null;
+    `budget_amount`, in the billing account's currency.
+  EOT
+  type = object({
+    project_id    = optional(string)
+    budget_amount = optional(number, 100)
+  })
+  default = null
+
+  validation {
+    condition     = var.shared_vpc == null || try(var.shared_vpc.project_id == null || can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.shared_vpc.project_id)), false)
+    error_message = "The shared_vpc project_id must be 6-30 lowercase letters, digits or hyphens, starting with a letter and not ending with a hyphen."
+  }
+
+  validation {
+    condition     = var.shared_vpc == null || try(var.shared_vpc.budget_amount > 0 && floor(var.shared_vpc.budget_amount) == var.shared_vpc.budget_amount, false)
+    error_message = "The shared_vpc budget_amount must be a positive whole number."
+  }
+}
+
 variable "firebase" {
   description = <<-EOT
     The Firebase projects, one per environment folder, to which Firebase is added in the Firebase console; not created when null:
