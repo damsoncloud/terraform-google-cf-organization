@@ -863,3 +863,82 @@ run "invalid_apps_script_budget" {
 
   expect_failures = [var.apps_script]
 }
+
+run "shared_vpc_disabled" {
+  command = plan
+
+  assert {
+    condition     = length(google_project.shared_vpc) == 0 && output.shared_vpc_projects == {} && length([for name in keys(google_billing_budget.projects) : name if startswith(name, "shared_vpc")]) == 0
+    error_message = "The Shared VPC host projects must not be created by default."
+  }
+}
+
+run "shared_vpc" {
+  variables {
+    shared_vpc = {}
+  }
+
+  assert {
+    condition = (
+      google_project.shared_vpc["prod"].project_id == "cmn-shared-vpcs-prod-c3d4" &&
+      google_project.shared_vpc["nonprod"].project_id == "cmn-shared-vpcs-nonprod-c3d4" &&
+      alltrue([for project in google_project.shared_vpc : project.folder_id == "folders/111111111111" && project.billing_account == "012345-6789AB-CDEF01" && !project.auto_create_network]) &&
+      output.shared_vpc_projects["nonprod"].project_id == "cmn-shared-vpcs-nonprod-c3d4" &&
+      output.shared_vpc_projects["nonprod"].number == google_project.shared_vpc["nonprod"].number
+    )
+    error_message = "A host project inside and one outside the perimeter must be generated as cmn-shared-vpcs-<name>-<suffix> in the common folder, without the default network."
+  }
+
+  assert {
+    condition = (
+      google_billing_budget.projects["shared_vpc_prod"].budget_filter[0].projects == toset(["projects/${google_project.shared_vpc["prod"].number}"]) &&
+      google_billing_budget.projects["shared_vpc_nonprod"].amount[0].specified_amount[0].units == "100"
+    )
+    error_message = "Each host project must have its own budget, of 100 by default."
+  }
+}
+
+run "custom_shared_vpc" {
+  command = plan
+
+  variables {
+    shared_vpc = {
+      host_projects = {
+        main = { project_id = "cmn-network-hub-6703", budget_amount = 50 }
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      keys(google_project.shared_vpc) == ["main"] &&
+      google_project.shared_vpc["main"].project_id == "cmn-network-hub-6703" &&
+      google_billing_budget.projects["shared_vpc_main"].amount[0].specified_amount[0].units == "50"
+    )
+    error_message = "The host projects, their IDs and budgets must be configurable."
+  }
+}
+
+run "invalid_shared_vpc" {
+  command = plan
+
+  variables {
+    shared_vpc = {
+      host_projects = {
+        Prod = { project_id = "Shared_VPC", budget_amount = 0.5 }
+      }
+    }
+  }
+
+  expect_failures = [var.shared_vpc]
+}
+
+run "shared_vpc_project_id_too_long" {
+  command = plan
+
+  variables {
+    shared_vpc = { host_projects = { nonproduction = {} } }
+  }
+
+  expect_failures = [google_project.shared_vpc]
+}

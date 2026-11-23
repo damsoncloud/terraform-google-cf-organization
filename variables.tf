@@ -304,6 +304,35 @@ variable "apps_script" {
   }
 }
 
+variable "shared_vpc" {
+  description = <<-EOT
+    The Shared VPC host projects in the common environment's folder, configured by cf-shared-vpc; not created when null:
+    `host_projects`, by name, one for the environments in the VPC Service Controls perimeter and one for the others by default, as a host project and its service
+    projects must be in the same perimeter:
+      `project_id`, generated as `<common short name>-shared-vpcs-<name>-<suffix>` when null;
+      `budget_amount`, in the billing account's currency.
+  EOT
+  type = object({
+    host_projects = optional(map(object({
+      project_id    = optional(string)
+      budget_amount = optional(number, 100)
+    })), { prod = {}, nonprod = {} })
+  })
+  default = null
+
+  validation {
+    condition = var.shared_vpc == null || try(length(var.shared_vpc.host_projects) > 0 && alltrue([for name, host in var.shared_vpc.host_projects :
+      can(regex("^[a-z][a-z0-9]*$", name)) && (host.project_id == null || can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", host.project_id)))
+    ]), false)
+    error_message = "The shared_vpc host_projects must not be empty; their names must be lowercase letters and digits, starting with a letter, and their project_ids 6-30 lowercase letters, digits or hyphens, starting with a letter and not ending with a hyphen."
+  }
+
+  validation {
+    condition     = var.shared_vpc == null || try(alltrue([for host in values(var.shared_vpc.host_projects) : host.budget_amount > 0 && floor(host.budget_amount) == host.budget_amount]), false)
+    error_message = "The shared_vpc budget_amounts must be positive whole numbers."
+  }
+}
+
 variable "firebase" {
   description = <<-EOT
     The Firebase projects, one per environment folder, to which Firebase is added in the Firebase console; not created when null:

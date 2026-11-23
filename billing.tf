@@ -9,6 +9,9 @@ locals {
       observability  = { project_id = google_project.observability.project_id, number = google_project.observability.number, amount = var.budget_amounts.observability }
       api_management = { project_id = google_project.api_management.project_id, number = google_project.api_management.number, amount = var.budget_amounts.api_management }
     },
+    { for name, project in google_project.shared_vpc : "shared_vpc_${name}" => {
+      project_id = project.project_id, number = project.number, amount = var.shared_vpc.host_projects[name].budget_amount
+    } },
     var.apps_script == null ? {} : {
       apps_script = merge(module.apps_script[0].project, { amount = var.apps_script.budget_amount })
     },
