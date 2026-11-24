@@ -46,7 +46,7 @@ run "enforced" {
 
   assert {
     condition = (
-      length(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services) == 74 &&
+      length(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services) == 75 &&
       google_access_context_manager_service_perimeter.foundations.status[0].restricted_services == google_access_context_manager_service_perimeter.foundations.spec[0].restricted_services &&
       contains(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services, "storage.googleapis.com") &&
       !contains(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services, "iam.googleapis.com")
@@ -102,7 +102,7 @@ run "dry_run" {
     condition = (
       length(google_access_context_manager_service_perimeter.foundations.status[0].restricted_services) == 0 &&
       length(google_access_context_manager_service_perimeter_ingress_policy.rules) == 0 &&
-      length(google_access_context_manager_service_perimeter.foundations.spec[0].restricted_services) == 74 &&
+      length(google_access_context_manager_service_perimeter.foundations.spec[0].restricted_services) == 75 &&
       length(google_access_context_manager_service_perimeter_dry_run_ingress_policy.rules) == 3
     )
     error_message = "In dry-run mode, only the dry-run configuration must restrict services and hold the rules."

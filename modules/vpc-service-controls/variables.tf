@@ -105,6 +105,7 @@ variable "restricted_services" {
     "eventarc.googleapis.com",
     "iamcredentials.googleapis.com",
     "iap.googleapis.com",
+    "iaptunnel.googleapis.com",
     "logging.googleapis.com",
     "memorystore.googleapis.com",
     "modelarmor.googleapis.com",
