@@ -34,6 +34,11 @@ module "organization" {
     environments = ["development"]
   }
   defender_for_cloud = true
+
+  shared_vpc = {}
+  perimeter_groups = {
+    organization = ["gcp-organization-admins", "gcp-network-admins"]
+  }
 }
 
 module "org_policies" {
@@ -51,6 +56,7 @@ module "org_policies" {
     allowed_services = module.organization.firebase_apis
   }
   additional_allowed_members = module.organization.defender_for_cloud.external_members
+  shared_vpc_host_folder_id  = module.hierarchy.folders["common"].id
 }
 
 module "vpc_service_controls" {
@@ -63,6 +69,8 @@ module "vpc_service_controls" {
     observability  = module.organization.observability_project_number
     api_management = module.organization.api_management_project_number
     apps_script    = module.organization.apps_script_project.number
+    # The host project of the environments in the perimeter; the other host project stays outside it
+    shared_vpc_prod = module.organization.shared_vpc_projects["prod"].number
   }
   deployers = concat(
     [module.bootstrap.tf_bootstrap_email, module.bootstrap.tf_plan_email],

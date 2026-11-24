@@ -46,7 +46,8 @@ module "organization" {
 Pin an exact version. New versions are published as immutable GitHub releases with `vX.Y.Z` tags, following [semantic versioning](https://semver.org/).
 
 See [`examples/basic`](examples/basic) for the module applied with cf-hierarchy and cf-bootstrap, and [`examples/complete`](examples/complete) for the organisation policies,
-the perimeter and Firebase.
+the perimeter, Firebase and the Shared VPC host projects: the `prod` host project in the perimeter, Shared VPC hosts restricted to the common environment's folder, and the
+network administrators group allowed into the perimeter.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- markdownlint-capture -->
