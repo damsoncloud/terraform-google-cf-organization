@@ -31,7 +31,10 @@ variable "allowed_locations" {
 }
 
 variable "allowed_services" {
-  description = "Services allowed by the `gcp.restrictServiceUsage` constraint in the organisation. Services the constraint does not support are always allowed."
+  description = <<-EOT
+  Services allowed by the `gcp.restrictServiceUsage` constraint in the organisation.
+  Services the constraint does not support are always allowed.
+  EOT
   type        = list(string)
   default = [
     # keep-sorted start
@@ -125,7 +128,10 @@ variable "additional_allowed_services" {
 }
 
 variable "additional_allowed_members" {
-  description = "Principals allowed in IAM allow policies by the `iam.managed.allowedPolicyMembers` constraint, e.g. `user:someone@partner.example`, in addition to the organisation's principal set and `billing-budget-alert@system.gserviceaccount.com`."
+  description = <<-EOT
+  Principals allowed in IAM allow policies by the `iam.managed.allowedPolicyMembers` constraint, e.g. `user:someone@partner.example`,
+  in addition to the organisation's principal set and `billing-budget-alert@system.gserviceaccount.com`.
+  EOT
   type        = list(string)
   default     = []
   nullable    = false
@@ -137,7 +143,10 @@ variable "additional_allowed_members" {
 }
 
 variable "additional_allowed_principal_sets" {
-  description = "Principal sets allowed in IAM allow policies by the `iam.managed.allowedPolicyMembers` constraint, e.g. another organisation's `//cloudresourcemanager.googleapis.com/organizations/<id>`, in addition to the organisation's."
+  description = <<-EOT
+  Principal sets allowed in IAM allow policies by the `iam.managed.allowedPolicyMembers` constraint,
+  e.g. another organisation's `//cloudresourcemanager.googleapis.com/organizations/<id>`, in addition to the organisation's.
+  EOT
   type        = list(string)
   default     = []
   nullable    = false
@@ -156,7 +165,10 @@ variable "allowed_vpc_peering_networks" {
 }
 
 variable "legacy_folder_id" {
-  description = "The `legacy` folder (`folders/<id>`), e.g. the `folders[\"legacy\"].id` output of cf-hierarchy, where service usage and service account key creation are not restricted; no exceptions when null."
+  description = <<-EOT
+  The `legacy` folder (`folders/<id>`), e.g. the `folders["legacy"].id` output of cf-hierarchy,
+  where service usage and service account key creation are not restricted; no exceptions when null.
+  EOT
   type        = string
   default     = null
 
@@ -167,7 +179,10 @@ variable "legacy_folder_id" {
 }
 
 variable "api_management" {
-  description = "The API Management Hub project, e.g. the `api_management_project_id` output of cf-organization, and the services allowed there in addition to the organisation's, e.g. the Gemini API; no exception when null."
+  description = <<-EOT
+  The API Management Hub project, e.g. the `api_management_project_id` output of cf-organization,
+  and the services allowed there in addition to the organisation's, e.g. the Gemini API; no exception when null.
+  EOT
   type = object({
     project_id       = string
     allowed_services = optional(list(string), ["apikeys.googleapis.com", "generativelanguage.googleapis.com"])
@@ -176,7 +191,10 @@ variable "api_management" {
 }
 
 variable "firebase" {
-  description = "The Firebase projects, e.g. the IDs of the `firebase_projects` output of cf-organization, and the Firebase APIs allowed there in addition to the organisation's, e.g. its `firebase_apis` output; no exception when null."
+  description = <<-EOT
+  The Firebase projects, e.g. the IDs of the `firebase_projects` output of cf-organization,
+  and the Firebase APIs allowed there in addition to the organisation's, e.g. its `firebase_apis` output; no exception when null.
+  EOT
   type = object({
     project_ids      = list(string)
     allowed_services = list(string)
@@ -185,7 +203,10 @@ variable "firebase" {
 }
 
 variable "shared_vpc_host_folder_id" {
-  description = "The folder (`folders/<id>`) where Shared VPC host projects can be, e.g. the common environment's folder, enforced with `compute.restrictSharedVpcHostProjects`; not restricted when null."
+  description = <<-EOT
+  The folder (`folders/<id>`) where Shared VPC host projects can be, e.g. the common environment's folder,
+  enforced with `compute.restrictSharedVpcHostProjects`; not restricted when null.
+  EOT
   type        = string
   default     = null
 
@@ -204,7 +225,7 @@ variable "disabled_constraints" {
 
 variable "additional_policies" {
   description = <<-EOT
-    Further policies, replacing the baseline's policy of the same constraint on the same resource:
+  Further policies, replacing the baseline's policy of the same constraint on the same resource:
     `constraint`, the constraint's name, e.g. `custom.denyExternalBuckets`;
     `parent`, the resource, `organizations/<id>`, `folders/<id>` or `projects/<id>`, the organisation when null;
     `enforce`, for boolean constraints, managed constraints included;

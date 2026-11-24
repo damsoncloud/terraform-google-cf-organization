@@ -19,7 +19,10 @@ variable "domain" {
 }
 
 variable "environment_tag_key" {
-  description = "Namespaced name of the `environment` tag key (`<organization_id>/environment`), e.g. the `environment_tag_key_namespaced_name` output of cf-hierarchy. The groups granted roles on a folder see it through the Folder Viewer role on the organisation, limited to the folder's tag value."
+  description = <<-EOT
+  Namespaced name of the `environment` tag key (`<organization_id>/environment`), e.g. the `environment_tag_key_namespaced_name` output of cf-hierarchy.
+  The groups granted roles on a folder see it through the Folder Viewer role on the organisation, limited to the folder's tag value.
+  EOT
   type        = string
 
   validation {
@@ -29,7 +32,14 @@ variable "environment_tag_key" {
 }
 
 variable "folders" {
-  description = "The folders by folder name, e.g. the `folders` output of cf-hierarchy, each tagged with its name as the `environment` tag value: `id`, the resource name (`folders/<id>`); `short_name`, the environment's short name, null for folders other than environments; `common`, whether it is the common environment. Each folder's IAM policy is set authoritatively, and each environment folder gets the `gcp-<short name>-<suffix>` groups of `environment_group_roles`. The foundations' projects are created in the common environment's folder and their generated IDs start with its short name."
+  description = <<-EOT
+  The folders by folder name, e.g. the `folders` output of cf-hierarchy, each tagged with its name as the `environment` tag value:
+    `id`, the resource name (`folders/<id>`);
+    `short_name`, the environment's short name, null for folders other than environments;
+    `common`, whether it is the common environment.
+  Each folder's IAM policy is set authoritatively, and each environment folder gets the `gcp-<short name>-<suffix>` groups of `environment_group_roles`.
+  The foundations' projects are created in the common environment's folder and their generated IDs start with its short name.
+  EOT
   type = map(object({
     id         = string
     short_name = optional(string)
@@ -75,7 +85,11 @@ variable "bootstrap_project_id" {
 }
 
 variable "observability_project_id" {
-  description = "ID of the Observability project. Generated as `<common short name>-observability-<suffix>`, e.g. `cmn-observability-<suffix>`, with a random 4 hexadecimal characters suffix, when null; set it to keep the ID of an existing project."
+  description = <<-EOT
+  ID of the Observability project.
+  Generated as `<common short name>-observability-<suffix>`, e.g. `cmn-observability-<suffix>`, with a random 4 hexadecimal characters suffix, when null;
+  set it to keep the ID of an existing project.
+  EOT
   type        = string
   default     = null
 
@@ -86,7 +100,11 @@ variable "observability_project_id" {
 }
 
 variable "api_management_project_id" {
-  description = "ID of the API Management Hub project. Generated as `<common short name>-api-management-hub-<suffix>`, e.g. `cmn-api-management-hub-<suffix>`, with the suffix of a generated Observability project ID, when null; set it to keep the ID of an existing project."
+  description = <<-EOT
+  ID of the API Management Hub project.
+  Generated as `<common short name>-api-management-hub-<suffix>`, e.g. `cmn-api-management-hub-<suffix>`, with the suffix of a generated Observability project ID, when null;
+  set it to keep the ID of an existing project.
+  EOT
   type        = string
   default     = null
 
@@ -133,7 +151,10 @@ variable "tf_plan_organization_roles" {
 }
 
 variable "tf_environment_emails" {
-  description = "Emails of the environment deployer service accounts by environment folder name, e.g. the `tf_environment_emails` output of cf-bootstrap. Each gets `environment_deployer_roles` on its folder."
+  description = <<-EOT
+  Emails of the environment deployer service accounts by environment folder name, e.g. the `tf_environment_emails` output of cf-bootstrap.
+  Each gets `environment_deployer_roles` on its folder.
+  EOT
   type        = map(string)
 
   validation {
@@ -216,7 +237,10 @@ variable "legacy_admins_roles" {
 }
 
 variable "additional_organization_bindings" {
-  description = "Further organisation members by role, e.g. `serviceAccount:` or `group:` members, and the Google-managed service agents granted at the organisation level, which the authoritative policy would remove otherwise."
+  description = <<-EOT
+  Further organisation members by role, e.g. `serviceAccount:` or `group:` members, and the Google-managed service agents granted at the organisation level,
+  which the authoritative policy would remove otherwise.
+  EOT
   type        = map(list(string))
   default     = {}
   nullable    = false
@@ -235,7 +259,10 @@ variable "additional_folder_bindings" {
 }
 
 variable "audit_log_types" {
-  description = "Data Access audit log types enabled for all services in the organisation; none when empty. Admin Activity audit logs are always written."
+  description = <<-EOT
+  Data Access audit log types enabled for all services in the organisation; none when empty.
+  Admin Activity audit logs are always written.
+  EOT
   type        = list(string)
   default     = ["ADMIN_READ", "DATA_READ", "DATA_WRITE"]
   nullable    = false
@@ -248,7 +275,7 @@ variable "audit_log_types" {
 
 variable "model_armor" {
   description = <<-EOT
-    Organisation-level Model Armour floor setting, the minimum filters of every Model Armour template in the organisation:
+  Organisation-level Model Armour floor setting, the minimum filters of every Model Armour template in the organisation:
     `enforcement`, whether templates weaker than the floor setting are rejected;
     `confidence_level`, the confidence level of the Responsible AI and the prompt injection and jailbreak filters: `LOW_AND_ABOVE`, `MEDIUM_AND_ABOVE` or `HIGH`;
     `responsible_ai_filters`, the Responsible AI filters: `SEXUALLY_EXPLICIT`, `HATE_SPEECH`, `HARASSMENT` or `DANGEROUS`;
@@ -280,7 +307,7 @@ variable "model_armor" {
 
 variable "apps_script" {
   description = <<-EOT
-    The Apps Script project in the common environment's folder, the Standard Cloud Project of every Apps Script; not created when null:
+  The Apps Script project in the common environment's folder, the Standard Cloud Project of every Apps Script; not created when null:
     `project_id`, generated as `<common short name>-apps-script-<suffix>` when null;
     `budget_amount`, in the billing account's currency;
     `apis`, the APIs used by the Apps Scripts.
@@ -306,9 +333,9 @@ variable "apps_script" {
 
 variable "shared_vpc" {
   description = <<-EOT
-    The Shared VPC host projects in the common environment's folder, configured by cf-shared-vpc; not created when null:
-    `host_projects`, by name, one for the environments in the VPC Service Controls perimeter and one for the others by default, as a host project and its service
-    projects must be in the same perimeter:
+  The Shared VPC host projects in the common environment's folder, configured by cf-shared-vpc; not created when null:
+    `host_projects`, by name, one for the environments in the VPC Service Controls perimeter and one for the others by default,
+    as a host project and its service projects must be in the same perimeter:
       `project_id`, generated as `<common short name>-shared-vpcs-<name>-<suffix>` when null;
       `budget_amount`, in the billing account's currency.
   EOT
@@ -335,7 +362,7 @@ variable "shared_vpc" {
 
 variable "firebase" {
   description = <<-EOT
-    The Firebase projects, one per environment folder, to which Firebase is added in the Firebase console; not created when null:
+  The Firebase projects, one per environment folder, to which Firebase is added in the Firebase console; not created when null:
     `environments`, the environment folders with a Firebase project, all but the common one when null;
     `project_ids`, by environment folder name, generated as `<short name>-firebase-<suffix>` for the others;
     `budget_amount`, of each project, in the billing account's currency;
@@ -381,7 +408,7 @@ variable "firebase" {
 variable "perimeter_groups" {
   description = <<-EOT
   The groups whose members access the VPC Service Controls perimeter's projects from outside it, from any source,
-    returned by the `perimeter_groups` output for the vpc-service-controls submodule's `groups` input:
+  returned by the `perimeter_groups` output for the vpc-service-controls submodule's `groups` input:
     `organization`, organisation groups by name, without the domain;
     `environments`, the environment folders, besides the common environment's, whose groups are allowed;
     `suffixes`, the suffixes of the allowed `gcp-<short name>-<suffix>` groups of the common environment and those environments.
@@ -401,7 +428,12 @@ variable "perimeter_groups" {
 }
 
 variable "defender_for_cloud" {
-  description = "Whether the organisation-level part of the Microsoft Defender for Cloud integration is created ([`modules/defender-for-cloud`](modules/defender-for-cloud)): its service accounts in the Observability project, its organisation custom roles and its organisation roles, including those of Microsoft's agentless scanning identities, which the org-policies submodule must allow (the `defender_for_cloud` output's `external_members`). cf-observability sets up the rest of the integration."
+  description = <<-EOT
+  Whether the organisation-level part of the Microsoft Defender for Cloud integration is created ([`modules/defender-for-cloud`](modules/defender-for-cloud)):
+  its service accounts in the Observability project, its organisation custom roles and its organisation roles, including those of Microsoft's agentless scanning identities,
+  which the org-policies submodule must allow (the `defender_for_cloud` output's `external_members`).
+  cf-observability sets up the rest of the integration.
+  EOT
   type        = bool
   default     = false
   nullable    = false

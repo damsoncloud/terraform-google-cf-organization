@@ -19,7 +19,10 @@ variable "mode" {
 }
 
 variable "access_policy_id" {
-  description = "ID of the organisation's existing access policy, of which there can be only one; the perimeter is added to it, and its other perimeters are left as they are. An access policy is created when null."
+  description = <<-EOT
+  ID of the organisation's existing access policy, of which there can be only one; the perimeter is added to it, and its other perimeters are left as they are.
+  An access policy is created when null.
+  EOT
   type        = string
   default     = null
 
@@ -42,7 +45,10 @@ variable "perimeter_name" {
 }
 
 variable "projects" {
-  description = "Numbers of the projects in the perimeter, by a static key, e.g. the bootstrap and common projects; the modules creating the other projects add them with the `perimeter_name` output."
+  description = <<-EOT
+  Numbers of the projects in the perimeter, by a static key, e.g. the bootstrap and common projects;
+  the modules creating the other projects add them with the `perimeter_name` output.
+  EOT
   type        = map(string)
   default     = {}
   nullable    = false
@@ -54,7 +60,10 @@ variable "projects" {
 }
 
 variable "restricted_services" {
-  description = "Services restricted by the perimeter: by default, the generally available services supported by VPC Service Controls among the services allowed by the org-policies submodule and those used by the foundations."
+  description = <<-EOT
+  Services restricted by the perimeter: by default, the generally available services supported by VPC Service Controls among the services allowed by the org-policies submodule
+  and those used by the foundations.
+  EOT
   type        = list(string)
   default = [
     "agentidentity.googleapis.com",
@@ -143,21 +152,30 @@ variable "additional_restricted_services" {
 }
 
 variable "deployers" {
-  description = "Emails of the service accounts deploying from outside the perimeter, e.g. GitHub-hosted runners, allowed to access the perimeter from any source: `tf-bootstrap`, `tf-plan` and the environment deployers of cf-bootstrap."
+  description = <<-EOT
+  Emails of the service accounts deploying from outside the perimeter, e.g. GitHub-hosted runners, allowed to access the perimeter from any source:
+  `tf-bootstrap`, `tf-plan` and the environment deployers of cf-bootstrap.
+  EOT
   type        = list(string)
   default     = []
   nullable    = false
 }
 
 variable "groups" {
-  description = "Emails of the groups whose members access the perimeter's projects from outside it, from any source, e.g. the `perimeter_groups` output of cf-organization. For a stricter access, e.g. from the office network or managed devices only, leave it empty and use `access_levels` and `ingress_policies` instead."
+  description = <<-EOT
+  Emails of the groups whose members access the perimeter's projects from outside it, from any source, e.g. the `perimeter_groups` output of cf-organization.
+  For a stricter access, e.g. from the office network or managed devices only, leave it empty and use `access_levels` and `ingress_policies` instead.
+  EOT
   type        = list(string)
   default     = []
   nullable    = false
 }
 
 variable "access_levels" {
-  description = "Basic access levels created in the access policy, by name, for the sources of `ingress_policies`: the requests' `ip_subnetworks`, `members` and `regions`, all of which must match."
+  description = <<-EOT
+  Basic access levels created in the access policy, by name, for the sources of `ingress_policies`:
+    the requests' `ip_subnetworks`, `members` and `regions`, all of which must match.
+  EOT
   type = map(object({
     ip_subnetworks = optional(list(string), [])
     members        = optional(list(string), [])
@@ -174,7 +192,7 @@ variable "access_levels" {
 
 variable "ingress_policies" {
   description = <<-EOT
-    Ingress rules in addition to the deployers', the foundations' groups' and Cloud Billing's, by their unique `title`:
+  Ingress rules in addition to the deployers', the foundations' groups' and Cloud Billing's, by their unique `title`:
     `identities` or `identity_type` (`ANY_IDENTITY`, `ANY_USER_ACCOUNT` or `ANY_SERVICE_ACCOUNT`), the principals allowed;
     `source_access_levels`, the names of `access_levels` or `*` for any source, and `source_resources`, e.g. `projects/<number>`;
     `resources`, the projects in the perimeter, `*` for all;
@@ -203,7 +221,7 @@ variable "ingress_policies" {
 
 variable "egress_policies" {
   description = <<-EOT
-    Egress rules:
+  Egress rules:
     `identities` or `identity_type`, the principals allowed;
     `resources`, the projects outside the perimeter, e.g. `projects/<number>`, `*` for all, and `external_resources`, e.g. Amazon S3 buckets;
     `operations`, the methods by service, as in `ingress_policies`.

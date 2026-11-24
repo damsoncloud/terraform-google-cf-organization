@@ -1,5 +1,9 @@
 variable "projects" {
-  description = "The Firebase projects by environment folder name: `project_id` and the folder (`folder_id`, `folders/<id>`)."
+  description = <<-EOT
+  The Firebase projects by environment folder name:
+    `project_id`;
+    the folder (`folder_id`, `folders/<id>`).
+  EOT
   type = map(object({
     project_id = string
     folder_id  = string

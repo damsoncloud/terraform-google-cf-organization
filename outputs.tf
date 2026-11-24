@@ -24,7 +24,11 @@ output "billing_disabler_project_roles" {
 }
 
 output "model_armor" {
-  description = "Filters of the organisation's Model Armour floor setting, the `model_armor` input with its defaults except `enforcement`, for the project-level Agent Platform and Google MCP server floor settings of cf-gcp-project, which replace the organisation's filters and screen only with their own enforcement enabled."
+  description = <<-EOT
+  Filters of the organisation's Model Armour floor setting, the `model_armor` input with its defaults except `enforcement`,
+  for the project-level Agent Platform and Google MCP server floor settings of cf-gcp-project,
+  which replace the organisation's filters and screen only with their own enforcement enabled.
+  EOT
   value       = { for setting, value in var.model_armor : setting => value if setting != "enforcement" }
 }
 
@@ -70,8 +74,8 @@ output "perimeter_groups" {
 
 output "defender_for_cloud" {
   description = <<-EOT
-  The Microsoft Defender for Cloud integration's organisation-level part, for the `azure_integration` input of cf-observability;
-    null when not created: `service_accounts`, their emails by name;
+  The Microsoft Defender for Cloud integration's organisation-level part, for the `azure_integration` input of cf-observability; null when not created:
+    `service_accounts`, their emails by name;
     `log_collection_role`, the custom role consuming the audit log subscription;
     `external_members`, Microsoft's identities granted organisation roles, for the org-policies submodule's `additional_allowed_members`.
   EOT

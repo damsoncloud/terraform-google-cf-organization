@@ -12,7 +12,7 @@ the Firebase console, choosing the existing project. It is called by cf-organiza
 | ---- | ----------- | ---- | ------- | :------: |
 | apis | Firebase APIs enabled in the projects. | `list(string)` | n/a | yes |
 | billing\_account | ID of the billing account of the projects. | `string` | n/a | yes |
-| projects | The Firebase projects by environment folder name: `project_id` and the folder (`folder_id`, `folders/<id>`). | ```map(object({ project_id = string folder_id = string }))``` | n/a | yes |
+| projects | The Firebase projects by environment folder name:   `project_id`;   the folder (`folder_id`, `folders/<id>`). | ```map(object({ project_id = string folder_id = string }))``` | n/a | yes |
 
 ## Outputs
 
