@@ -68,7 +68,7 @@ run "enforced" {
       ]) &&
       google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_from[0].sources[0].access_level == "*" &&
       google_access_context_manager_service_perimeter_ingress_policy.rules["Deployers"].ingress_to[0].operations[0].service_name == "*" &&
-      google_access_context_manager_service_perimeter_ingress_policy.rules["Cloud Billing budget notifications"].ingress_to[0].operations[0].method_selectors[0].method == "google.pubsub.v1.Publisher.Publish"
+      google_access_context_manager_service_perimeter_ingress_policy.rules["Cloud Billing budget notifications"].ingress_to[0].operations[0].method_selectors[0].method == "Publisher.Publish"
     )
     error_message = "The deployers and the foundations' groups must access the perimeter from any source, and Cloud Billing must publish budget notifications."
   }

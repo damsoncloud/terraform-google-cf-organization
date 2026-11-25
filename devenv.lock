@@ -3,11 +3,11 @@
     "devenv": {
       "locked": {
         "dir": "src/modules",
-        "lastModified": 1794919186,
-        "narHash": "sha256-28wJt3wsO/UqPMKI3plQtQF4TkBFTbRgxF2Vkj22a6M=",
+        "lastModified": 1795626624,
+        "narHash": "sha256-870gkyHTOoRjcmyyW7ieS+OD/HClNuQrQin7QY5KGC4=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "8efcb88c3fc5d110b0f1c499e01156cab23011d1",
+        "rev": "2dee64c2fafd0cc0dc2f1bd9c0535a286202299c",
         "type": "github"
       },
       "original": {
@@ -21,17 +21,17 @@
       "flake": false,
       "locked": {
         "dir": "devenvbase",
-        "lastModified": 1795004019,
-        "narHash": "sha256-VgUPpx3h87n0+/u+3XLawJy37f4C0Iuq8Ad6XvX+4OQ=",
+        "lastModified": 1795615981,
+        "narHash": "sha256-iC/zmhOhuTEe1GpYJI2I/YaES3HKJ8eYgvhAPRv4Pcg=",
         "owner": "damsoncloud",
         "repo": "dcp.sdlc",
-        "rev": "47cc410acc253cc3c5fbc26ee0b9f318cce2c493",
+        "rev": "92e60ece7370e303b7707ca80edb0181b3a4ebac",
         "type": "github"
       },
       "original": {
         "dir": "devenvbase",
         "owner": "damsoncloud",
-        "ref": "v2.2.0",
+        "ref": "v2.3.0",
         "repo": "dcp.sdlc",
         "type": "github"
       }
@@ -76,11 +76,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793686154,
-        "narHash": "sha256-Zb/0L3soxrkfcrywpfp0J++0WFLB3tzh0Xtx9up+VNc=",
+        "lastModified": 1795608474,
+        "narHash": "sha256-CwC7f1DripMBQjB7BozobprSYiA8Cn9rz8vsBthWJwk=",
         "owner": "cachix",
         "repo": "git-hooks.nix",
-        "rev": "204b6977e00caac19e2313015a598543ca7be150",
+        "rev": "5c6bf7c418b4abf003e6d00d231e87f5e6ad5230",
         "type": "github"
       },
       "original": {
@@ -146,11 +146,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1794951313,
-        "narHash": "sha256-8CWuilBFq9o9Rp0KNaxnA+qBvd125AXUz0xP7zZ7GHw=",
+        "lastModified": 1795162480,
+        "narHash": "sha256-Yuj3BarDzdSQa6KqfJQgWKBusEku+w/JCNb9VCPIvlU=",
         "owner": "cachix",
         "repo": "nixpkgs-python",
-        "rev": "5e4728a41877b4b5d4a447df8c5d5a487afbdcc3",
+        "rev": "bd2cb9c719f07bdd8405d2fe8274c965fe990113",
         "type": "github"
       },
       "original": {
