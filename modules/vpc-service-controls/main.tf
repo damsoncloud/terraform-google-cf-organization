@@ -33,7 +33,7 @@ locals {
       source_access_levels = ["*"]
       source_resources     = []
       resources            = ["*"]
-      operations           = { "pubsub.googleapis.com" = ["google.pubsub.v1.Publisher.Publish"] }
+      operations           = { "pubsub.googleapis.com" = ["Publisher.Publish"] }
     }],
     [for policy in var.ingress_policies : merge(policy, {
       source_access_levels = [for level in policy.source_access_levels : contains(keys(var.access_levels), level) ? "${local.access_policy}/accessLevels/${level}" : level]
