@@ -49,6 +49,16 @@ See [`examples/basic`](examples/basic) for the module applied with cf-hierarchy 
 the perimeter, Firebase and the Shared VPC host projects: the `prod` host project in the perimeter, Shared VPC hosts restricted to the common environment's folder, and the
 network administrators group allowed into the perimeter.
 
+### Several organisations
+
+For a customer with several organisations sharing one bootstrap project (cf-bootstrap's `additional_organizations`), the module is applied once per organisation.
+In the further organisations:
+
+* `bootstrap_project_id` is null, as the bootstrap project is budgeted in its own organisation,
+* `tf_environment_emails` are the organisation's deployers from cf-bootstrap's `additional_organizations` output,
+* `tf-bootstrap`, `tf-plan` and the deployers belong to another organisation, so the org-policies submodule allows them through `additional_allowed_members`, and the
+  vpc-service-controls submodule gets them as `deployers`.
+
 <!-- BEGIN_TF_DOCS -->
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable MD013 -->
@@ -63,7 +73,7 @@ network administrators group allowed into the perimeter.
 | audit\_log\_types | Data Access audit log types enabled for all services in the organisation; none when empty. Admin Activity audit logs are always written. | `list(string)` | ```[ "ADMIN_READ", "DATA_READ", "DATA_WRITE" ]``` | no |
 | billing\_account | ID of the billing account of the foundations' projects and their budgets, e.g. `012345-6789AB-CDEF01`. | `string` | n/a | yes |
 | billing\_admins\_group\_name | Name of the group administering the billing account, without the domain, notified of the budgets' alerts. | `string` | `"gcp-billing-admins"` | no |
-| bootstrap\_project\_id | ID of the bootstrap project, e.g. the `project_id` output of cf-bootstrap, which gets a budget. | `string` | n/a | yes |
+| bootstrap\_project\_id | ID of the bootstrap project, e.g. the `project_id` output of cf-bootstrap, which gets a budget. No budget is created when null, e.g. in the further organisations of cf-bootstrap's `additional_organizations`, whose bootstrap project is budgeted in its own organisation. | `string` | `null` | no |
 | budget\_amounts | Budget amounts of the foundations' projects, in the billing account's currency, alerting at 50%, 70% and 100%. | ```object({ bootstrap = optional(number, 100) observability = optional(number, 100) api_management = optional(number, 100) })``` | `{}` | no |
 | defender\_for\_cloud | Whether the organisation-level part of the Microsoft Defender for Cloud integration is created ([`modules/defender-for-cloud`](modules/defender-for-cloud)): its service accounts in the Observability project, its organisation custom roles and its organisation roles, including those of Microsoft's agentless scanning identities, which the org-policies submodule must allow (the `defender_for_cloud` output's `external_members`). cf-observability sets up the rest of the integration. | `bool` | `false` | no |
 | domain | Domain of the organisation's groups, e.g. `example.com` for `gcp-organization-admins@example.com`. | `string` | n/a | yes |

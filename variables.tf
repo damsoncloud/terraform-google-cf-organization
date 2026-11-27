@@ -80,8 +80,12 @@ variable "billing_admins_group_name" {
 }
 
 variable "bootstrap_project_id" {
-  description = "ID of the bootstrap project, e.g. the `project_id` output of cf-bootstrap, which gets a budget."
+  description = <<-EOT
+  ID of the bootstrap project, e.g. the `project_id` output of cf-bootstrap, which gets a budget.
+  No budget is created when null, e.g. in the further organisations of cf-bootstrap's `additional_organizations`, whose bootstrap project is budgeted in its own organisation.
+  EOT
   type        = string
+  default     = null
 }
 
 variable "observability_project_id" {
