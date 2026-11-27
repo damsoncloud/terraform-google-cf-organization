@@ -1,11 +1,13 @@
 data "google_project" "bootstrap" {
+  count = var.bootstrap_project_id != null ? 1 : 0
+
   project_id = var.bootstrap_project_id
 }
 
 locals {
   budget_projects = merge(
+    { for project in data.google_project.bootstrap : "bootstrap" => { project_id = project.project_id, number = project.number, amount = var.budget_amounts.bootstrap } },
     {
-      bootstrap      = { project_id = data.google_project.bootstrap.project_id, number = data.google_project.bootstrap.number, amount = var.budget_amounts.bootstrap }
       observability  = { project_id = google_project.observability.project_id, number = google_project.observability.number, amount = var.budget_amounts.observability }
       api_management = { project_id = google_project.api_management.project_id, number = google_project.api_management.number, amount = var.budget_amounts.api_management }
     },

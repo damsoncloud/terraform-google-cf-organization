@@ -196,6 +196,19 @@ run "billing_notification_channel_group" {
   }
 }
 
+run "without_bootstrap_budget" {
+  command = plan
+
+  variables {
+    bootstrap_project_id = null
+  }
+
+  assert {
+    condition     = !contains(keys(google_billing_budget.projects), "bootstrap") && length(data.google_project.bootstrap) == 0
+    error_message = "No bootstrap project budget must be created without bootstrap_project_id."
+  }
+}
+
 run "budgets" {
   variables {
     budget_amounts = {
